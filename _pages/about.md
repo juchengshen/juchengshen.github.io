@@ -24,7 +24,9 @@ latest_posts:
 Hi! I'm **Jucheng Shen**, an undergraduate at Rice University triple-majoring in Computer Science, Mathematics, and Economics. I work on generative AI, especially diffusion models and large language models.
 
 ## Research
+
 I'm working with [Prof. Anastasios Kyrillidis](https://akyrillidis.github.io/about/) on Recursive Reasoning LLMs, and with [Boya Zeng](https://boyazeng.github.io/) under [Prof. Zhuang Liu](https://liuzhuang13.github.io/) on large-scale text-to-image diffusion pre-training. Previously, I collaborated with [Yeonju Ro](https://sites.google.com/view/hey-yeonju) under [Prof. Atlas Wang](https://www.ece.utexas.edu/people/faculty/atlas-wang) to develop diffusion language model decoding algorithms that achieved up to 50% speedups while matching state-of-the-art accuracy. I also worked with Intel Labs under [Dr. Souvik Kundu](https://ksouvik52.github.io/) on training-free techniques to further accelerate diffusion LLM inference.
 
 ## Contact
+
 If you're interested in collaboration, please reach out to me via [js237@rice.edu](mailto:js237@rice.edu), **you have my words that I'll respond**.
