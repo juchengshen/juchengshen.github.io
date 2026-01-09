@@ -6,8 +6,6 @@ title: "Jucheng Shen | Computer Science & Mathematics @ Rice University"
 first_name: Jucheng
 middle_name:
 last_name: Shen
-contact_note: >
-  Prefer email for the quickest reply — jack.shen@rice.edu.
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
   Jucheng Shen is an undergraduate researcher at Rice University working on
   diffusion models, large language models, and generative AI. Personal
@@ -20,7 +18,7 @@ keywords: Jucheng Shen, Rice University, computer science, mathematics, generati
 lang: en # the language of your site (for example: en, fr, cn, ru, etc.)
 icon: 🧠 # the emoji used as the favicon (alternatively, provide image name in /assets/img/)
 
-url: https://jackshen-1215.github.io # the base hostname & protocol for your site
+url: https://juchengshen.github.io/ # the base hostname & protocol for your site
 baseurl: "" # the subpath of your site, e.g. /blog/. Leave blank for root
 last_updated: false # set to true if you want to display last updated in the footer
 impressum_path: # set to path to include impressum link in the footer, use the same path as permalink in a page, helps to conform with EU GDPR
