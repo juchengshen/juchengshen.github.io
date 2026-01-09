@@ -1,0 +1,68 @@
+- title: General Information
+  type: map
+  contents:
+    - name: Name
+      value: Jucheng Shen
+    - name: Email
+      value: js237@rice.edu
+    - name: Location
+      value: Houston, TX, USA
+    - name: Research Interests
+      value: Generative models, reasoning LLMs
+
+- title: Education
+  type: time_table
+  contents:
+    - title: B.S. in Computer Science, Mathematics, and Economics
+      institution: Rice University, Houston, TX
+      year: 2022 - Present (expected 2027)
+      description:
+        - Junior standing with a focus on generative modeling and efficient ML systems.
+        - Coursework in probabilistic modeling, optimization, and computational economics.
+
+- title: Research Experience
+  type: time_table
+  contents:
+    - title: Undergraduate Researcher – Recursive Reasoning LLMs
+      institution: Rice University · Prof. Anastasios Kyrillidis
+      year: 2025 - Present
+      description:
+        - Designing multi-step inference pipelines that make large language models more sample-efficient.
+        - Prototyping evaluation harnesses that measure reasoning improvements over standard decoding.
+    - title: Research Collaborator – Diffusion Pre-training
+      institution: Collaboration with Boya Zeng & Prof. Zhuang Liu
+      year: 2025 - Present
+      description:
+        - Exploring large-scale text-to-image diffusion pre-training recipes.
+        - Studying how visual priors transfer to downstream video generation tasks.
+    - title: Researcher – Diffusion Language Models
+      institution: UT Austin · Prof. Atlas Wang & Yeonju Ro
+      year: 2024 - 2025
+      description:
+        - Co-designed One-Shot Dynamic Thresholding for faster diffusion decoding.
+        - Extended the work with Intel Labs collaborators to pursue training-free inference speedups.
+    - title: Research Collaborator – SuperGen
+      institution: Rice University & collaborators
+      year: 2024 - 2025
+      description:
+        - Built sketching + tiling pipelines for the SuperGen ultra-high-resolution video generation system.
+        - Coordinated cross-institution experiments and evaluation.
+
+- title: Honors & Awards
+  type: time_table
+  contents:
+    - year: 2025
+      items:
+        - Speaker, NeurIPS 2025 Efficient Reasoning Workshop
+
+- title: Academic Interests
+  type: nested_list
+  contents:
+    - title: Generative models
+      items:
+        - Large-scale diffusion pre-training for images and video.
+        - Sketching and tiling strategies for controllable generation.
+    - title: Efficient inference
+      items:
+        - Multi-step reasoning pipelines for language models.
+        - Training-free acceleration techniques for diffusion decoders.
