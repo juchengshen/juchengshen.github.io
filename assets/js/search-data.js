@@ -429,14 +429,14 @@ ninja.data = [{
         title: 'email',
         section: 'Socials',
         handler: () => {
-          window.open("mailto:%6A%61%63%6B.%73%68%65%6E@%72%69%63%65.%65%64%75", "_blank");
+          window.open("mailto:%6A%73%32%33%37@%72%69%63%65.%65%64%75", "_blank");
         },
       },{
         id: 'social-github',
         title: 'GitHub',
         section: 'Socials',
         handler: () => {
-          window.open("https://github.com/jackshen-1215", "_blank");
+          window.open("https://github.com/juchengshen", "_blank");
         },
       },{
         id: 'social-linkedin',
@@ -446,18 +446,18 @@ ninja.data = [{
           window.open("https://www.linkedin.com/in/juchengshen", "_blank");
         },
       },{
-        id: 'social-rss',
-        title: 'RSS Feed',
-        section: 'Socials',
-        handler: () => {
-          window.open("/feed.xml", "_blank");
-        },
-      },{
         id: 'social-scholar',
         title: 'Google Scholar',
         section: 'Socials',
         handler: () => {
           window.open("https://scholar.google.com/citations?user=JDoZvzoAAAAJ", "_blank");
+        },
+      },{
+        id: 'social-x',
+        title: 'X',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://twitter.com/juchengshen_ai", "_blank");
         },
       },{
       id: 'light-theme',
