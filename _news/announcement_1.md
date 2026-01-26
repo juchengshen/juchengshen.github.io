@@ -6,3 +6,12 @@ related_posts: false
 ---
 
 I'll be in San Diego this December to present our **One-Shot Dynamic Thresholding** work at the NeurIPS 2025 Efficient Reasoning Workshop. Come say hi if you're around!
+
+---
+layout: post
+date: 2026-1-12 09:00:00-0500
+inline: true
+related_posts: false
+---
+
+I'm serving as the only undergrad TA for COMP 282: Computational Optimization for AI!
