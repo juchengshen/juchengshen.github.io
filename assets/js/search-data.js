@@ -369,7 +369,7 @@ ninja.data = [{
           description: "",
           section: "Books",handler: () => {
               window.location.href = "/books/the_godfather.html";
-            },},{id: "news-i-ll-be-in-san-diego-this-december-to-present-our-one-shot-dynamic-thresholding-work-at-the-neurips-2025-efficient-reasoning-workshop-come-say-hi-if-you-re-around-layout-post-date-2026-1-12-09-00-00-0500-inline-true-related-posts-false-i-m-serving-as-the-only-undergrad-ta-for-comp-282-computational-optimization-for-ai",
+            },},{id: "news-i-ll-be-in-san-diego-this-december-to-present-our-one-shot-dynamic-thresholding-work-at-the-neurips-2025-efficient-reasoning-workshop-come-say-hi-if-you-re-around",
           title: 'I’ll be in San Diego this December to present our One-Shot Dynamic Thresholding...',
           description: "",
           section: "News",},{id: "news-i-m-serving-as-the-only-undergrad-ta-for-comp-282-computational-optimization-for-ai",
