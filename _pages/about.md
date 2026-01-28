@@ -29,4 +29,4 @@ I'm working with [Prof. Anastasios Kyrillidis](https://akyrillidis.github.io/abo
 
 ## Contact
 
-If you're interested in collaboration, please reach out to me via [js237@rice.edu](mailto:js237@rice.edu), **you have my words that I'll respond**.
+If you’re interested in collaboration, feel free to reach out to me at js237 [at] rice [dot] edu. I’m always happy to chat.
