@@ -25,7 +25,7 @@ Hi! I'm **Jucheng Shen**, an undergraduate at Rice University triple-majoring in
 
 ## Research
 
-I'm working with [Prof. Anastasios Kyrillidis](https://akyrillidis.github.io/about/) on Recursive Reasoning LLMs, and with [Boya Zeng](https://boyazeng.github.io/) under [Prof. Zhuang Liu](https://liuzhuang13.github.io/) on large-scale text-to-image diffusion pre-training. Previously, I collaborated with [Yeonju Ro](https://sites.google.com/view/hey-yeonju) under [Prof. Atlas Wang](https://www.ece.utexas.edu/people/faculty/atlas-wang) to develop diffusion language model decoding algorithms that achieved up to 50% speedups while matching state-of-the-art accuracy. I also worked with Intel Labs under [Dr. Souvik Kundu](https://ksouvik52.github.io/) on training-free techniques to further accelerate diffusion LLM inference.
+I'm working with [Prof. Anastasios Kyrillidis](https://akyrillidis.github.io/about/) on Recursive Reasoning LLMs, and with [Boya Zeng](https://boyazeng.github.io/) under [Prof. Zhuang Liu](https://liuzhuang13.github.io/) on large-scale text-to-image diffusion pre-training. Previously, I collaborated with [Yeonju Ro](https://sites.google.com/view/hey-yeonju) under [Prof. Zhangyang "Atlas" Wang](https://www.ece.utexas.edu/people/faculty/atlas-wang) to develop diffusion language model decoding algorithms that achieved up to 50% speedups while matching state-of-the-art accuracy. I also worked with Intel Labs under [Dr. Souvik Kundu](https://ksouvik52.github.io/) on training-free techniques to further accelerate diffusion LLM inference.
 
 ## Contact
 
