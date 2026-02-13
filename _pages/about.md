@@ -29,8 +29,8 @@ I'm working with [Prof. Anastasios Kyrillidis](https://akyrillidis.github.io/abo
 
 ## Summer 2026 Research
 
-**I am actively seeking research opportunities for Summer 2026.**  
-If you are working on generative models, diffusion models, or large language models and are looking for a research collaborator, feel free to reach out.
+**I am seeking research opportunities for Summer 2026.** 
+If you are working on generative models, diffusion models, or large language models and see a potential fit, please feel free to reach out.
 
 📩 Email: js237 [at] rice [dot] edu
 
