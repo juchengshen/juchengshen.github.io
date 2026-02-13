@@ -27,7 +27,7 @@ Hi! I'm **Jucheng Shen**, an undergraduate at Rice University triple-majoring in
 
 I'm working with [Prof. Anastasios Kyrillidis](https://akyrillidis.github.io/about/) on looped transformers, and with [Boya Zeng](https://boyazeng.github.io/) under [Prof. Zhuang Liu](https://liuzhuang13.github.io/) on large-scale text-to-image diffusion model pre-training. Previously, I collaborated with [Yeonju Ro](https://sites.google.com/view/hey-yeonju) under [Prof. Zhangyang "Atlas" Wang](https://www.ece.utexas.edu/people/faculty/atlas-wang) to develop faster text diffusion language model decoding algorithms. I also worked with Intel Labs under [Dr. Souvik Kundu](https://ksouvik52.github.io/) on training-free techniques for accelerating diffusion LLM inference, achieving up to **[2.28× speedup](https://arxiv.org/abs/2512.07173)** over state-of-the-art methods with matching accuracy.
 
-## Open to 2026 Summer Research Opportunities
+## Summer 2026 Research
 
 **I am actively seeking research opportunities for Summer 2026.**  
 If you are working on generative models, diffusion models, or large language models and are looking for a research collaborator, feel free to reach out.
