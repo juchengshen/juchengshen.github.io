@@ -23,6 +23,13 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/cv/";
           },
+        },{id: "nav-resources",
+          title: "resources",
+          description: "A curated list of learning resources for ML, NLP, and diffusion models that I have personally found valuable.",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/resources/";
+          },
         },{id: "post-a-post-with-plotly-js",
         
           title: "a post with plotly.js",
