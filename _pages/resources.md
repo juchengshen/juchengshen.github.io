@@ -14,7 +14,7 @@ These are resources I have found genuinely useful in my own learning journey in 
 ## Natural Language Processing
 
 **[Speech and Language Processing](https://web.stanford.edu/~jurafsky/slp3/)**
-*Dan Jurafsky & James H. Martin — Stanford, 3rd ed. (draft, updated 2026)*
+_Dan Jurafsky & James H. Martin — Stanford, 3rd ed. (draft, updated 2026)_
 
 This self-contained NLP textbook covers everything from n-grams and logistic regression to transformers, LLMs, and post-training with RLHF/DPO. They also have additional appendix chapters that cover interesting topics like hidden Markov models, Bayes classification, and context-free grammars.
 
@@ -23,6 +23,6 @@ This self-contained NLP textbook covers everything from n-grams and logistic reg
 ## Diffusion Models
 
 **[MIT 6.S184: Generative AI with Stochastic Differential Equations](https://diffusion.csail.mit.edu/)**
-*Peter Holderrieth & Ezra Erives — MIT, 2026*
+_Peter Holderrieth & Ezra Erives — MIT, 2026_
 
-This is a collection of self-contained and mathematically rigorous lecture notes covering flow matching and diffusion models through the lens of SDEs and ODEs. It goes from the probabilistic foundations of generative modeling all the way to modern flow-based and score-based methods. Highly recommended if you want to understand *why* diffusion works, not just how to use it. [[Lecture notes PDF]](https://diffusion.csail.mit.edu/2026/docs/lecture_notes.pdf)
+This is a collection of self-contained and mathematically rigorous lecture notes covering flow matching and diffusion models through the lens of SDEs and ODEs. It goes from the probabilistic foundations of generative modeling all the way to modern flow-based and score-based methods. Highly recommended if you want to understand _why_ diffusion works, not just how to use it. [[Lecture notes PDF]](https://diffusion.csail.mit.edu/2026/docs/lecture_notes.pdf)
