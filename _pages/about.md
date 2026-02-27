@@ -25,7 +25,9 @@ Hi! I'm **Jucheng Shen**, an undergraduate at Rice University triple-majoring in
 
 ## Research
 
-I'm working with [Prof. Anastasios Kyrillidis](https://akyrillidis.github.io/about/) on looped transformers, and with [Boya Zeng](https://boyazeng.github.io/) under [Prof. Zhuang Liu](https://liuzhuang13.github.io/) on large-scale text-to-image diffusion model pre-training. Previously, I collaborated with [Yeonju Ro](https://sites.google.com/view/hey-yeonju) under [Prof. Zhangyang "Atlas" Wang](https://www.ece.utexas.edu/people/faculty/atlas-wang) to develop faster text diffusion language model decoding algorithms. I also worked with Intel Labs under [Dr. Souvik Kundu](https://ksouvik52.github.io/) on training-free techniques for accelerating diffusion LLM inference, achieving up to **[2.28× speedup](https://arxiv.org/abs/2512.07173)** over state-of-the-art methods with matching accuracy.
+I'm working with [Jiachen Yao](https://www.jiachenyao.com/) and [Robert Joseph](https://www.robertj1.com/) under [Prof. Anima Anandkumar](https://tensorlab.cms.caltech.edu/users/anima/) on neural operators, and with [Prof. Anastasios Kyrillidis](https://akyrillidis.github.io/about/) on looped transformers. 
+
+Previously, I worked with [Boya Zeng](https://boyazeng.github.io/) under [Prof. Zhuang Liu](https://liuzhuang13.github.io/) on large-scale text-to-image diffusion model pre-training, with [Yeonju Ro](https://sites.google.com/view/hey-yeonju) under [Prof. Zhangyang "Atlas" Wang](https://www.ece.utexas.edu/people/faculty/atlas-wang) to develop faster text diffusion language model decoding algorithms, and also with Intel Labs under [Dr. Souvik Kundu](https://ksouvik52.github.io/) on training-free techniques for accelerating diffusion LLM inference, achieving up to **[2.28× speedup](https://arxiv.org/abs/2512.07173)** over state-of-the-art methods with matching accuracy.
 
 ## Summer 2026 Research
 
