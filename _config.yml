@@ -8,13 +8,13 @@ middle_name:
 last_name: Shen
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
   Jucheng Shen is an undergraduate researcher at Rice University working on
-  generative ai, including diffusion models and large language models. Personal
+  generative modeling, including diffusion models and large language models. Personal
   homepage, publications, and projects.
 footer_text: >
   Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme.
   Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
   Photos from <a href="https://unsplash.com" target="_blank">Unsplash</a>.
-keywords: Jucheng Shen, Rice University, computer science, mathematics, generative AI, diffusion models, large language models # add your own keywords or leave empty
+keywords: Jucheng Shen, Rice University, computer science, mathematics, generative modeling, diffusion models, large language models # add your own keywords or leave empty
 lang: en # the language of your site (for example: en, fr, cn, ru, etc.)
 icon: 🧠 # the emoji used as the favicon (alternatively, provide image name in /assets/img/)
 

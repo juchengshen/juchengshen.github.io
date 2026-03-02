@@ -21,7 +21,7 @@ latest_posts:
   enabled: false
 ---
 
-Hi! I'm **Jucheng Shen**, an undergraduate at Rice University triple-majoring in Computer Science, Mathematics, and Economics. I work on generative AI, especially diffusion models and large language models.
+Hi! I'm **Jucheng Shen**, an undergraduate at Rice University triple-majoring in Computer Science, Mathematics, and Economics. I work on generative modeling, especially diffusion models and large language models.
 
 ## Research
 
