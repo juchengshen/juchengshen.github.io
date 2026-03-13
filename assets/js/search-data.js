@@ -25,7 +25,7 @@ ninja.data = [{
           },
         },{id: "nav-resources",
           title: "resources",
-          description: "A curated list of learning resources for ML, NLP, and diffusion models that I have personally found valuable.",
+          description: "A curated list of learning resources for ML, NLP, diffusion models, and reinforcement learning that I have personally found valuable.",
           section: "Navigation",
           handler: () => {
             window.location.href = "/resources/";
