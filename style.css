@@ -181,21 +181,26 @@ footer {
 /* Responsive */
 @media (max-width: 600px) {
   .container {
-    padding: 1.5rem 1rem 2rem;
+    padding: 1rem 1rem 2rem;
   }
 
   .header-with-photo {
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .social-links {
-    justify-content: center;
+    align-items: flex-start;
+    text-align: left;
+    gap: 0;
+    padding: 1rem 0 0.75rem;
   }
 
   .profile-pic {
-    width: 180px;
-    height: 180px;
+    display: none;
+  }
+
+  .social-links {
+    display: none;
+  }
+
+  .header-text {
+    padding-top: 0;
   }
 }
