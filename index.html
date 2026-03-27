@@ -10,50 +10,39 @@
 </head>
 <body>
   <div class="container">
-    <!-- Header: photo on left, bio text on right -->
-    <header class="header-with-photo">
+    <!-- Left sidebar: photo + socials -->
+    <aside class="sidebar">
       <img src="assets/img/prof_pic.jpg" alt="Jucheng Shen" class="profile-pic">
-      <div class="header-text">
+      <nav class="social-links">
+        <a href="assets/pdf/Jucheng_Shen_CV.pdf"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> CV</a>
+        <a href="mailto:js237@rice.edu"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Email</a>
+        <a href="https://github.com/juchengshen"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg> GitHub</a>
+        <a href="https://scholar.google.com/citations?user=JDoZvzoAAAAJ"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M5.242 13.769L0 9.5 12 0l12 9.5-5.242 4.269C17.548 11.249 14.978 9.5 12 9.5c-2.977 0-5.548 1.748-6.758 4.269zM12 10a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"/></svg> Scholar</a>
+      </nav>
+    </aside>
+
+    <!-- Right content: everything else -->
+    <main class="content">
+      <div class="bio">
         <p>
-          Hi! I'm <strong>Jucheng Shen</strong>, an undergraduate at Rice University majoring in Computer Science, Mathematics, and Economics. Most people know me as Jack.
+          Hi! I'm <strong>Jucheng (Jack) Shen</strong>, a junior at Rice University majoring in Computer Science, Math, Econ. I'm interested in diffusion, LLM, and RL.
         </p>
         <p>
-          I work on diffusion models and large language models.
+          I'm working with <a href="https://www.jiachenyao.com/">Jiachen Yao</a> and <a href="https://www.robertj1.com/">Robert Joseph</a> under Prof. <a href="https://tensorlab.cms.caltech.edu/users/anima/">Anima Anandkumar</a> at Caltech. I also work with Prof. <a href="https://akyrillidis.github.io/about/">Anastasios Kyrillidis</a> at Rice.
         </p>
-        <nav class="social-links">
-          <a href="assets/pdf/Jucheng_Shen_CV.pdf"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> CV</a>
-          <a href="mailto:js237@rice.edu"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Email</a>
-          <a href="https://github.com/juchengshen"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg> GitHub</a>
-          <a href="https://scholar.google.com/citations?user=JDoZvzoAAAAJ"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M5.242 13.769L0 9.5 12 0l12 9.5-5.242 4.269C17.548 11.249 14.978 9.5 12 9.5c-2.977 0-5.548 1.748-6.758 4.269zM12 10a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"/></svg> Scholar</a>
-          <a href="https://linkedin.com/in/juchengshen"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg> LinkedIn</a>
-          <a href="https://x.com/juchengshen_ai"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg> Twitter</a>
-        </nav>
+        <p>
+          Previously, I worked with <a href="https://boyazeng.github.io/">Boya Zeng</a> under Prof. <a href="https://liuzhuang13.github.io/">Zhuang Liu</a> at Princeton, with <a href="https://sites.google.com/view/hey-yeonju">Yeonju Ro</a> under Prof. <a href="https://www.ece.utexas.edu/people/faculty/atlas-wang">Atlas Wang</a> at UT Austin, with Dr. <a href="https://ksouvik52.github.io/">Souvik Kundu</a> at Intel Labs, and with <a href="https://home.fanjiang.net/">Fanjiang Ye</a> under Prof. <a href="https://www.wang-yuke.com/">Yuke Wang</a> at Rice.
+        </p>
       </div>
-    </header>
 
-    <hr>
+      <hr>
 
-    <!-- Research -->
-    <section>
-      <h2>Research</h2>
-      <p>
-        I'm working with <a href="https://www.jiachenyao.com/">Jiachen Yao</a> and <a href="https://www.robertj1.com/">Robert Joseph</a> under Prof. <a href="https://tensorlab.cms.caltech.edu/users/anima/">Anima Anandkumar</a> at Caltech. I also work with Prof. <a href="https://akyrillidis.github.io/about/">Anastasios Kyrillidis</a> at Rice.
-      </p>
-      <p>
-        Previously, I worked with <a href="https://boyazeng.github.io/">Boya Zeng</a> under Prof. <a href="https://liuzhuang13.github.io/">Zhuang Liu</a> at Princeton, with <a href="https://sites.google.com/view/hey-yeonju">Yeonju Ro</a> under Prof. <a href="https://www.ece.utexas.edu/people/faculty/atlas-wang">Zhangyang "Atlas" Wang</a> at UT Austin, with Dr. <a href="https://ksouvik52.github.io/">Souvik Kundu</a> at Intel Labs, and with Prof. <a href="https://www.wang-yuke.com/">Yuke Wang</a> at Rice.
-      </p>
-    </section>
-
-    <hr>
-
-    <!-- Publications -->
-    <section>
       <h2>Selected Publications</h2>
 
       <div class="pub">
         <div class="pub-info">
           <p class="pub-title">Improving the Throughput of Diffusion-based Large Language Models via a Training-Free Confidence-Aware Calibration</p>
-          <p class="pub-authors"><strong>Jucheng Shen</strong>, Gaurav Sarkar, Yeonju Ro, Sharath Nittur Sridhar, Zhangyang Wang, Aditya Akella, Souvik Kundu</p>
+          <p class="pub-authors"><strong>Jucheng Shen</strong>, <a href="https://www.linkedin.com/in/gauravsarkar7888/">Gaurav Sarkar</a>, <a href="https://sites.google.com/view/hey-yeonju">Yeonju Ro</a>, <a href="https://www.linkedin.com/in/sharathnittursridhar/">Sharath Nittur Sridhar</a>, <a href="https://www.ece.utexas.edu/people/faculty/atlas-wang">Zhangyang Wang</a>, <a href="https://www.cs.utexas.edu/~akella/">Aditya Akella</a>, <a href="https://ksouvik52.github.io/">Souvik Kundu</a></p>
           <p class="pub-venue"><em>arXiv 2025</em> | <a href="https://arxiv.org/abs/2512.07173">paper</a> | <a href="https://github.com/juchengshen/CadLLM">code</a></p>
         </div>
       </div>
@@ -61,26 +50,26 @@
       <div class="pub">
         <div class="pub-info">
           <p class="pub-title">Beyond Static Cutoffs: One-Shot Dynamic Thresholding for Diffusion Language Models</p>
-          <p class="pub-authors"><strong>Jucheng Shen</strong>, Yeonju Ro</p>
+          <p class="pub-authors"><strong>Jucheng Shen</strong>, <a href="https://sites.google.com/view/hey-yeonju">Yeonju Ro</a></p>
           <p class="pub-venue"><em>NeurIPS 2025 Efficient Reasoning Workshop</em> | <a href="https://arxiv.org/abs/2511.02077">paper</a> | <a href="https://github.com/juchengshen/osdt">code</a></p>
         </div>
       </div>
 
       <div class="pub">
         <div class="pub-info">
-          <p class="pub-title">SUPERGEN: An Efficient Ultra-high-resolution Video Generation System with Sketching and Tiling</p>
-          <p class="pub-authors">Fanjiang Ye, Zepeng Zhao, Yi Mu, <strong>Jucheng Shen</strong>, Renjie Li, Kaijian Wang, Desen Sun, Saurabh Agarwal, Myungjin Lee, Triston Cao, Aditya Akella, Arvind Krishnamurthy, T. S. Eugene Ng, Zhengzhong Tu, Yuke Wang</p>
-          <p class="pub-venue"><em>arXiv 2025</em> | <a href="https://arxiv.org/abs/2508.17756v2">paper</a></p>
+          <p class="pub-title">i1: Simple and Open Recipes for Pre-training Strong Text-to-Image Models</p>
+          <p class="pub-authors"><a href="https://boyazeng.github.io/">Boya Zeng</a>, <a href="https://github.com/luotianze666">Tianze Luo</a>, <a href="https://urrealhero.github.io/MyPersonalWeb/">Shu Pu</a>, <strong>Jucheng Shen</strong>, <a href="https://taiminglu.com/">Taiming Lu</a>, <a href="https://gabesarch.me/">Gabriel Herbert Sarch</a>, <a href="https://liuzhuang13.github.io/">Zhuang Liu</a></p>
+          <p class="pub-venue"><em>coming soon</em></p>
         </div>
       </div>
-    </section>
 
-
-    <!-- Footer -->
-    <footer>
-      <p>&copy; 2026 Jucheng Shen</p>
-    </footer>
+    </main>
   </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 Jucheng Shen. Design inspired by <a href="https://boyazeng.github.io/">Boya Zeng</a>, a previous mentor of mine.</p>
+  </footer>
 
 </body>
 </html>
