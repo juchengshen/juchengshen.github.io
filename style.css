@@ -46,8 +46,8 @@ body {
 }
 
 .profile-pic {
-  width: 200px;
-  height: 200px;
+  width: 180px;
+  height: 180px;
   border-radius: 6px;
   object-fit: cover;
   flex-shrink: 0;
@@ -56,8 +56,8 @@ body {
 /* Social links — horizontal row below bio text */
 .social-links {
   display: flex;
-  gap: 1.25rem;
-  flex-wrap: wrap;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
   margin-top: 0.5rem;
 }
 
@@ -65,8 +65,16 @@ body {
   color: var(--text-light);
   text-decoration: none;
   border-bottom: none;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   transition: color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.social-links a svg {
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .social-links a:hover {
