@@ -16,10 +16,11 @@
 /* Base */
 html {
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 18px;
-  line-height: 1.65;
+  font-size: 18.5px;
+  line-height: 1.35;
   color: var(--text);
   background: var(--bg);
+  overflow-y: scroll;
 }
 
 body {
@@ -29,20 +30,19 @@ body {
 
 /* Two-column layout */
 .container {
-  max-width: 920px;
+  max-width: 690px;
   margin: 0 auto;
   padding: 1.75rem 2rem 1rem;
-  display: flex;
-  gap: 5rem;
-  align-items: flex-start;
+  position: relative;
+  transform: translateX(3rem);
 }
 
 /* Left sidebar */
 .sidebar {
-  flex-shrink: 0;
   width: 150px;
-  position: sticky;
-  top: 1.5rem;
+  position: absolute;
+  right: calc(100% + 3.5rem);
+  top: 1.75rem;
 }
 
 .profile-pic {
@@ -86,13 +86,13 @@ body {
 
 /* Right content */
 .content {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
 }
 
 /* Bio paragraphs — more breathing room */
 .bio p {
-  margin-bottom: 0.75rem;
+  line-height: 1.45;
+  margin-bottom: 1.1rem;
 }
 
 /* Links — same font color, dotted underline */
@@ -110,9 +110,10 @@ a:hover {
 
 /* Sections */
 h2 {
-  font-size: 1.3rem;
+  font-family: "Palatino Linotype", Palatino, "Book Antiqua", serif;
+  font-size: 22px;
   font-weight: 700;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.9rem;
   letter-spacing: -0.01em;
 }
 
@@ -122,7 +123,7 @@ p {
 
 hr {
   border: none;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #ccc;
   margin: 0.75rem 0;
 }
 
@@ -132,31 +133,37 @@ hr {
   display: flex;
   gap: 0.75rem;
   align-items: flex-start;
+  max-width: 80%;
+  margin-left: 1.5rem;
 }
 
 .pub::before {
   content: "\25A0";
-  font-size: 0.5rem;
+  font-size: 0.65rem;
   color: var(--text);
   flex-shrink: 0;
-  margin-top: 0.45rem;
+  margin-top: 0.15rem;
 }
 
 .pub-title {
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: normal;
+  font-size: 18.5px;
   margin-bottom: 0.25rem;
   line-height: 1.4;
 }
 
 .pub-authors {
-  font-size: 0.85rem;
+  font-size: 18.5px;
   color: var(--text-light);
   margin-bottom: 0.2rem;
 }
 
+.pub-authors strong {
+  color: var(--text);
+}
+
 .pub-venue {
-  font-size: 0.85rem;
+  font-size: 18.5px;
   color: var(--text-light);
   font-style: italic;
   margin-bottom: 0;
@@ -164,7 +171,7 @@ hr {
 
 /* Footer */
 footer {
-  max-width: 920px;
+  max-width: 690px;
   margin: 0 auto;
   padding: 1rem 2rem 2rem;
   text-align: center;
@@ -173,19 +180,15 @@ footer {
   border-top: 1px solid var(--border);
 }
 
-/* Responsive — mobile: single column, hide photo + socials */
-@media (max-width: 600px) {
-  .container {
-    flex-direction: column;
-    padding: 1rem 1rem 1rem;
-    gap: 0;
-  }
-
+/* Responsive — hide sidebar when viewport too narrow */
+@media (max-width: 960px) {
   .sidebar {
     display: none;
   }
+}
 
-  .content {
-    width: 100%;
+@media (max-width: 600px) {
+  .container {
+    padding: 1rem 1rem 1rem;
   }
 }
