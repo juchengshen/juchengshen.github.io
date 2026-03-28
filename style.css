@@ -185,6 +185,10 @@ footer {
   .sidebar {
     display: none;
   }
+
+  .container {
+    transform: none;
+  }
 }
 
 @media (max-width: 600px) {
