@@ -193,7 +193,11 @@ footer {
 
 @media (max-width: 600px) {
   html {
-    font-size: 16px;
+    font-size: 15px;
+  }
+
+  h2 {
+    font-size: 19px;
   }
 
   .container {
@@ -203,7 +207,7 @@ footer {
   .pub-title,
   .pub-authors,
   .pub-venue {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .pub {
