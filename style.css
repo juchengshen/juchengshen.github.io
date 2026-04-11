@@ -208,7 +208,7 @@ hr {
 
 .pub-venue {
   font-size: 18.5px;
-  color: var(--text-light);
+  color: var(--text);
   font-style: italic;
   margin-bottom: 0;
 }
