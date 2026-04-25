@@ -131,6 +131,81 @@ body {
 /* Right content */
 .content {
   width: 100%;
+  position: relative;
+}
+
+/* Resources overlay — covers the main content column only */
+.resources-overlay[hidden] {
+  display: none;
+}
+
+.resources-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  z-index: 10;
+  padding-top: 2.5rem;
+  min-height: 100%;
+}
+
+.resources-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0;
+  transition: color 0.2s ease;
+}
+
+.resources-back:hover {
+  color: var(--text-light);
+}
+
+.resources-back svg {
+  flex-shrink: 0;
+}
+
+.resources-body h3 {
+  font-family: "Palatino Linotype", Palatino, "Book Antiqua", serif;
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 1.2rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.resources-intro {
+  margin-bottom: 0.5rem;
+  color: var(--text-light);
+}
+
+.resources-list {
+  list-style: none;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.resources-list li {
+  margin-bottom: 0.4rem;
+  position: relative;
+  line-height: 1.4;
+}
+
+.resources-list li::before {
+  content: "\25A0";
+  font-size: 0.65rem;
+  position: absolute;
+  left: -1rem;
+  top: 0.4rem;
 }
 
 /* Bio paragraphs — more breathing room */
@@ -224,6 +299,14 @@ footer {
   border-top: 1px solid var(--border);
 }
 
+.resources-body .last-updated {
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--text-light);
+  text-align: right;
+}
+
 /* Responsive — collapse sidebar when viewport too narrow */
 @media (max-width: 960px) {
   .sidebar {
@@ -232,6 +315,11 @@ footer {
 
   .container {
     transform: none;
+  }
+
+  /* Resources overlay is sidebar-triggered only; ensure it never shows on mobile */
+  .resources-overlay {
+    display: none !important;
   }
 }
 

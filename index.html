@@ -6,7 +6,7 @@
   <title>Jucheng Shen</title>
   <meta name="description" content="Jucheng Shen is an undergraduate researcher at Rice University working on generative modeling, diffusion models, and large language models.">
   <meta name="keywords" content="Jucheng Shen, Rice University, computer science, mathematics, generative modeling, diffusion models, large language models">
-  <link rel="stylesheet" href="style.css?v=20260401-1">
+  <link rel="stylesheet" href="style.css?v=20260424-4">
 </head>
 <body>
   <div class="container">
@@ -18,6 +18,7 @@
         <a href="mailto:jucheng.shen@rice.edu"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Email</a>
         <a href="https://github.com/juchengshen"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg> GitHub</a>
         <a href="https://scholar.google.com/citations?user=JDoZvzoAAAAJ"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M5.242 13.769L0 9.5 12 0l12 9.5-5.242 4.269C17.548 11.249 14.978 9.5 12 9.5c-2.977 0-5.548 1.748-6.758 4.269zM12 10a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"/></svg> Scholar</a>
+        <a href="#resources" class="resources-trigger" onclick="event.preventDefault(); document.getElementById('resourcesOverlay').hidden=false;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Resources</a>
       </nav>
 
       <section class="sidebar-news" aria-labelledby="news-heading">
@@ -54,6 +55,53 @@
 
     <!-- Right content: everything else -->
     <main class="content">
+      <!-- Resources overlay (hidden by default) -->
+      <div class="resources-overlay" id="resourcesOverlay" hidden>
+        <button type="button" class="resources-back" aria-label="Back" onclick="document.getElementById('resourcesOverlay').hidden=true;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Back
+        </button>
+
+        <div class="resources-body">
+          <h2>Recommended Resources</h2>
+          <p class="resources-intro">A curated list of courses, books, and lectures I've found valuable for learning various topics in AI/ML.</p>
+
+          <h3>Diffusion Models</h3>
+          <ul class="resources-list">
+            <li><a href="https://diffusion.csail.mit.edu/2026/index.html">MIT 6.S184 — Generative AI with Stochastic Differential Equations</a></li>
+          </ul>
+
+          <h3>Large Language Models &amp; NLP</h3>
+          <ul class="resources-list">
+            <li><a href="https://web.stanford.edu/~jurafsky/slp3/">Speech and Language Processing</a> by Jurafsky &amp; Martin</li>
+          </ul>
+
+          <h3>Reinforcement Learning</h3>
+          <ul class="resources-list">
+            <li><a href="http://incompleteideas.net/book/the-book-2nd.html">Reinforcement Learning: An Introduction</a> by Sutton &amp; Barto</li>
+            <li><a href="https://web.stanford.edu/class/cs234/index.html">Stanford CS234 — Reinforcement Learning</a></li>
+          </ul>
+
+          <h3>Computer Vision</h3>
+          <ul class="resources-list">
+            <li><a href="https://visionbook.mit.edu/">Foundations of Computer Vision</a> by Torralba, Isola &amp; Freeman</li>
+          </ul>
+
+          <h3>AI Alignment</h3>
+          <ul class="resources-list">
+            <li><a href="https://alignment-w2024.notion.site/">AI Alignment Course (Winter 2024)</a></li>
+          </ul>
+
+          <h3>Miscellaneous</h3>
+          <ul class="resources-list">
+            <li><a href="https://nightingal3.github.io/blog/2026/04/16/compute-grants/">How to apply for compute grants</a></li>
+            <li><a href="https://www.alphaxiv.org/">alphaXiv</a> — AI-assisted literature review</li>
+          </ul>
+
+          <p class="last-updated">Last updated: Apr 24, 2026</p>
+        </div>
+      </div>
+
       <div class="bio">
         <p>
           Hi! I'm <strong>Jucheng (Jack) Shen</strong>, a junior at Rice University majoring in Computer Science, Math, Econ. I'm interested in diffusion, LLM, and RL.
