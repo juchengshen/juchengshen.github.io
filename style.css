@@ -132,6 +132,7 @@ body {
 .content {
   width: 100%;
   position: relative;
+  font-size: 16.5px;
 }
 
 /* Resources overlay — covers the main content column only */
@@ -230,7 +231,7 @@ a:hover {
 /* Sections */
 h2 {
   font-family: "Palatino Linotype", Palatino, "Book Antiqua", serif;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   margin-bottom: 0.9rem;
   letter-spacing: -0.01em;
@@ -266,13 +267,13 @@ hr {
 
 .pub-title {
   font-weight: normal;
-  font-size: 18.5px;
+  font-size: 16.5px;
   margin-bottom: 0.25rem;
   line-height: 1.4;
 }
 
 .pub-authors {
-  font-size: 18.5px;
+  font-size: 16.5px;
   color: var(--text-light);
   margin-bottom: 0.2rem;
 }
@@ -282,7 +283,7 @@ hr {
 }
 
 .pub-venue {
-  font-size: 18.5px;
+  font-size: 16.5px;
   color: var(--text);
   font-style: italic;
   margin-bottom: 0;
@@ -329,7 +330,11 @@ footer {
   }
 
   h2 {
-    font-size: 19px;
+    font-size: 17px;
+  }
+
+  .content {
+    font-size: 15px;
   }
 
   .container {
