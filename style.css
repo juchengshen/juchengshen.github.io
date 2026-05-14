@@ -175,6 +175,17 @@ body {
   flex-shrink: 0;
 }
 
+.resources-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.resources-title-row h2 {
+  margin-bottom: 0;
+}
+
 .resources-body h3 {
   font-family: "Palatino Linotype", Palatino, "Book Antiqua", serif;
   font-size: 18px;
@@ -301,11 +312,11 @@ footer {
 }
 
 .resources-body .last-updated {
-  margin-top: 1.5rem;
+  margin-bottom: 0;
   font-size: 0.8rem;
   font-style: italic;
   color: var(--text-light);
-  text-align: right;
+  white-space: nowrap;
 }
 
 /* Responsive — collapse sidebar when viewport too narrow */
