@@ -1,4 +1,4 @@
-const mobileLayout = window.matchMedia('(max-width: 960px)');
+const mobileLayout = window.matchMedia('(max-width: 1130px)');
 const sidebar = document.querySelector('.sidebar');
 const news = document.querySelector('.sidebar-news');
 const olderNews = document.querySelector('.older-news');

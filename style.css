@@ -30,7 +30,7 @@ body {
 
 /* Main column with left sidebar */
 .container {
-  max-width: 690px;
+  max-width: 780px;
   margin: 0 auto;
   padding: 1.75rem 2rem 1rem;
   position: relative;
@@ -273,31 +273,29 @@ hr {
 
 /* Publications */
 .pub {
-  margin-bottom: 0.9rem;
+  margin-bottom: 1.1rem;
   display: flex;
   gap: 0.75rem;
-  align-items: flex-start;
+  align-items: center;
   max-width: 100%;
-  margin-left: 1.5rem;
 }
 
-.pub::before {
-  content: "\25A0";
-  font-size: 0.65rem;
-  color: var(--text);
-  flex-shrink: 0;
-  margin-top: 0.15rem;
+.pub-thumb {
+  flex: 0 0 176px;
+  width: 176px;
+  height: auto;
+  border-radius: 6px;
 }
 
 .pub-title {
   font-weight: normal;
-  font-size: 16.5px;
+  font-size: 0.8rem;
   margin-bottom: 0.25rem;
   line-height: 1.4;
 }
 
 .pub-authors {
-  font-size: 16.5px;
+  font-size: 0.8rem;
   color: var(--text-light);
   margin-bottom: 0.2rem;
 }
@@ -307,7 +305,7 @@ hr {
 }
 
 .pub-venue {
-  font-size: 16.5px;
+  font-size: 0.8rem;
   color: var(--text);
   font-style: italic;
   margin-bottom: 0;
@@ -315,7 +313,7 @@ hr {
 
 /* Footer */
 footer {
-  max-width: 690px;
+  max-width: 780px;
   margin: 0 auto;
   padding: 1rem 2rem 2rem;
   text-align: center;
@@ -333,7 +331,7 @@ footer {
 }
 
 /* Keep all content available when the sidebar becomes a compact header. */
-@media (max-width: 960px) {
+@media (max-width: 1130px) {
   .sidebar {
     position: static;
     width: 100%;
@@ -455,7 +453,15 @@ footer {
   }
 
   .pub {
-    margin-left: 0.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    max-width: 100%;
+  }
+
+  .pub-thumb {
+    flex: none;
+    width: 240px;
     max-width: 100%;
   }
 }
