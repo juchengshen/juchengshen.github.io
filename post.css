@@ -1,0 +1,308 @@
+/* Project pages: shares the homepage's type, colors and link style. */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --text-light: #666666;
+  --border: #e5e5e5;
+  --panel: #faf9f6;
+}
+
+html {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18.5px;
+  color: var(--text);
+  background: var(--bg);
+  overflow-y: scroll;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--text-light);
+  padding-bottom: 1px;
+}
+
+a:hover {
+  color: var(--text-light);
+}
+
+.post {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 1.75rem 2rem 1rem;
+  font-size: 16.5px;
+  line-height: 1.6;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 1.75rem;
+  border-bottom: none;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+h1,
+h2 {
+  font-family: "Palatino Linotype", Palatino, "Book Antiqua", serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: 30px;
+  margin-bottom: 0.3rem;
+}
+
+h2 {
+  font-size: 20px;
+  margin: 2rem 0 0.6rem;
+}
+
+.subtitle {
+  font-size: 18px;
+  color: var(--text-light);
+  margin-bottom: 0.8rem;
+  line-height: 1.35;
+}
+
+.meta {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin-bottom: 0.15rem;
+}
+
+.meta.venue {
+  font-style: italic;
+}
+
+.hero {
+  display: block;
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  margin: 1.5rem auto;
+  border-radius: 8px;
+}
+
+.summary {
+  background: var(--panel);
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.post p {
+  margin-bottom: 0.8rem;
+}
+
+.post ul {
+  margin: 0 0 0.8rem 1.25rem;
+}
+
+.post li {
+  margin-bottom: 0.3rem;
+}
+
+figure {
+  margin: 1.25rem 0;
+}
+
+figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+figure.narrow img {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--text-light);
+}
+
+.equation {
+  margin: 0.9rem 0;
+  text-align: center;
+  font-style: italic;
+  overflow-x: auto;
+}
+
+.equation span {
+  display: block;
+}
+
+.table-wrap {
+  margin: 1.1rem 0;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-top: 1.5px solid var(--text);
+  border-bottom: 1.5px solid var(--text);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+th,
+td {
+  padding: 0.35rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  font-weight: 700;
+  border-bottom: 1px solid var(--text);
+}
+
+tbody tr + tr td {
+  border-top: 1px solid var(--border);
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.strong {
+  background: var(--panel);
+}
+
+.table-note {
+  margin-top: -0.6rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--text-light);
+}
+
+pre {
+  overflow-x: auto;
+  padding: 0.8rem 1rem;
+  background: var(--panel);
+  border-radius: 8px;
+  font-family: Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.blog-title {
+  margin-bottom: 1.5rem;
+}
+
+.blog-entry {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.blog-thumb {
+  flex: 0 0 176px;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.blog-thumb img {
+  display: block;
+  width: 176px;
+  height: auto;
+  border-radius: 6px;
+}
+
+.blog-entry h2 {
+  margin: 0 0 0.25rem;
+}
+
+.blog-entry p {
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.blog-entry .blog-venue {
+  margin-bottom: 0;
+  font-style: italic;
+  color: var(--text-light);
+}
+
+footer {
+  max-width: 780px;
+  margin: 1.5rem auto 0;
+  padding: 1rem 2rem 2rem;
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.8rem;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 600px) {
+  html {
+    font-size: 15px;
+  }
+
+  .post {
+    padding: 1rem 1.25rem;
+    font-size: 15px;
+  }
+
+  h1 {
+    font-size: 25px;
+  }
+
+  h2 {
+    font-size: 17px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+  }
+
+  th,
+  td {
+    padding: 0.35rem;
+  }
+
+  .blog-entry {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .blog-thumb {
+    flex: none;
+    max-width: 100%;
+  }
+
+  .blog-thumb img {
+    width: 240px;
+    max-width: 100%;
+  }
+
+  .blog-entry p {
+    font-size: 15px;
+  }
+
+  footer {
+    padding: 1rem 1.25rem 2rem;
+  }
+}

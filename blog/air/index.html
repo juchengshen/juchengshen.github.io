@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>One Model, Two Roles | Jucheng Shen</title>
+  <meta name="description" content="A shared-weight recurrent Transformer can develop two distinct roles when one update receives the input and the other does not.">
+  <link rel="icon" href="../../favicon.ico?v=20261030-1" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="../../favicon.svg?v=20261030-1" type="image/svg+xml" sizes="any">
+  <link rel="stylesheet" href="../../post.css?v=20261101-4">
+</head>
+<body>
+  <main class="post">
+    <a class="back" href="../">&larr; Blog</a>
+
+    <h1>One Model, Two Roles</h1>
+    <p class="subtitle">Emergent Specialization in a Shared Recurrent Transformer</p>
+    <p class="meta"><strong>Jucheng Shen*</strong>, <a href="https://www.linkedin.com/in/barbara-su-966314268/" target="_blank" rel="noopener noreferrer">Barbara Su*</a>, <a href="https://akyrillidis.github.io/about/" target="_blank" rel="noopener noreferrer">Anastasios Kyrillidis</a> &nbsp;<span style="color: var(--text-light)">* equal contribution</span></p>
+    <p class="meta venue">NeurIPS 2026 | <a href="https://arxiv.org/abs/2605.17811" target="_blank" rel="noopener noreferrer">paper</a> | <a href="https://github.com/juchengshen/air" target="_blank" rel="noopener noreferrer">code</a></p>
+
+    <img class="hero" src="../../assets/img/thumb-air.svg" width="440" height="275" alt="One shared model: with input injected it keeps some cells undecided; without input it commits to every cell.">
+
+    <p class="summary"><strong>In short:</strong> we reuse one Transformer to update two latent states, and only one of the updates sees the input. That single difference is enough for the two states to take on distinct roles. One always holds a complete candidate answer; the other keeps some positions undecided and attends more locally.</p>
+
+    <h2>The question</h2>
+    <p>Recurrent reasoning models such as <a href="https://arxiv.org/abs/2506.21734" target="_blank" rel="noopener noreferrer">HRM</a> and <a href="https://arxiv.org/abs/2510.04871" target="_blank" rel="noopener noreferrer">TRM</a> keep two latent states and update them in turn. HRM uses a separate network for each state, while TRM ties them into a single shared network. That raises a simple question: <em>when the same model updates both states, does it learn two different jobs, or does it just process both states in the same way?</em></p>
+    <p>The answer tests whether specialization needs separate parameters at all, or whether one shared computation can specialize once it can tell which state it is updating.</p>
+
+    <h2>A minimal testbed</h2>
+    <p>We study this in <strong>Asymmetric Input Recurrence (AIR)</strong>. It keeps two latent states, <i>z</i><sub>H</sub> and <i>z</i><sub>L</sub>, and one Transformer <i>f</i> with one set of parameters &theta;. The only built-in difference between the updates is whether the encoded input <i>x&#771;</i> is added:</p>
+    <p class="equation">
+      <span>L-update: &nbsp;<i>z</i><sub>L</sub> &larr; <i>f</i>(<i>z</i><sub>L</sub> + <i>z</i><sub>H</sub> + <i>x&#771;</i>; &theta;)</span>
+      <span>H-update: &nbsp;<i>z</i><sub>H</sub> &larr; <i>f</i>(<i>z</i><sub>H</sub> + <i>z</i><sub>L</sub>; &theta;)</span>
+    </p>
+    <p>The updates run in the order L, L, H, L, L, H within each cycle. Only <i>z</i><sub>H</sub> is directly supervised, and the division of labor described below is not built into the update rule.</p>
+    <figure>
+      <img src="../../assets/img/posts/air/architecture.webp" width="1500" height="829" loading="lazy" alt="Diagram of AIR: one shared Transformer takes the two states plus the input for the L-update, and the two states with no input for the H-update.">
+      <figcaption>The AIR testbed. The same Transformer is reused with the input for L-updates (top) and without it for H-updates (bottom).</figcaption>
+    </figure>
+
+    <h2>Two different-looking states</h2>
+    <p>To see what each state holds, we decode both at every sub-step with the output head used at test time, on Sudoku-Extreme and on Maze. The same split appears in all five independently trained checkpoints per task:</p>
+    <ul>
+      <li><i>z</i><sub>H</sub> is <strong>fully committed</strong>: it always decodes to a complete candidate, even when that candidate is wrong.</li>
+      <li><i>z</i><sub>L</sub> is <strong>partially committed</strong>: some positions stay undecided, and those positions move from one sub-step to the next.</li>
+    </ul>
+    <figure>
+      <img src="../../assets/img/posts/air/sudoku-air.webp" width="1400" height="350" loading="lazy" alt="Four decoded Sudoku boards. The two boards for z_H are complete; the two boards for z_L have some blank gray cells in different places.">
+      <figcaption>Sudoku with AIR. Left two boards: <i>z</i><sub>H</sub>. Right two boards: <i>z</i><sub>L</sub>, with undecided cells in gray.</figcaption>
+    </figure>
+    <figure>
+      <img src="../../assets/img/posts/air/maze-air.webp" width="1500" height="358" loading="lazy" alt="Four decoded mazes. The two mazes for z_H are complete with one solution path; the two mazes for z_L contain gray undecided regions.">
+      <figcaption>Maze with AIR. Left two: <i>z</i><sub>H</sub>. Right two: <i>z</i><sub>L</sub>. Black is wall, blue is the solution path, gray is undecided, red is goal, and green is start.</figcaption>
+    </figure>
+    <p>Injecting the input into both updates nearly removes this split. <i>z</i><sub>L</sub> no longer shows visible undecided regions, so the split is not simply a result of carrying two states.</p>
+    <figure>
+      <img src="../../assets/img/posts/air/sudoku-symmetric.webp" width="1400" height="350" loading="lazy" alt="Four decoded Sudoku boards from the symmetric model. None of them has blank cells.">
+      <figcaption>The symmetric control, with input in both updates. <i>z</i><sub>L</sub> (right two boards) no longer shows undecided cells.</figcaption>
+    </figure>
+
+    <h2>The signal that matters</h2>
+    <p>Our hypothesis is that the shared model needs a way to tell which state it is updating. To test it, we vary how many copies of the input each update receives.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Configuration</th><th class="num">Sudoku</th><th class="num">Maze</th></tr>
+        </thead>
+        <tbody>
+          <tr class="strong"><td>Asymmetric input, shared model (6 variants, mean)</td><td class="num">59.1%</td><td class="num">73.1%</td></tr>
+          <tr><td>Symmetric input, shared model (2 variants, mean)</td><td class="num">51.5%</td><td class="num">69.9%</td></tr>
+          <tr><td>HRM, two separate networks</td><td class="num">55.0%</td><td class="num">74.5%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-note">Exact-solve accuracy. Shared-model variants use five seeds each. Group means are approximate.</p>
+    <p>On Sudoku the effect is clear: all 12 asymmetric-versus-symmetric comparisons stay significant after Holm correction. Maze is weaker: the average moves in the same direction, but only one of the 12 comparisons survives correction. The best AIR variants are comparable to the two-network HRM baseline, and exceed it on Sudoku, with half of its parameters.</p>
+    <p>The signal does not have to be the input. Starting from the symmetric model, a learned level token that is prepended, attended to, and then stripped raises Sudoku accuracy from 52.07% to 58.23%. Adding the same identity information element-wise to every token shows no detected improvement (50.91%). What seems to matter is a clear, separable signal of which state is being updated.</p>
+
+    <h2>Local and global attention</h2>
+    <p>The split also shows up in attention. L-updates attend more locally than H-updates on both tasks. On Sudoku, at the deepest layer and for control query cells, L places about 47% more attention mass than H on the cells that share a row, column, or box with the query. On Sudoku, L also puts extra attention on currently violated cells in deeper layers; on Maze, this extra attention is explained by locality alone.</p>
+    <figure>
+      <img src="../../assets/img/posts/air/attention.webp" width="1300" height="626" loading="lazy" alt="Two Sudoku attention heatmaps for the same query cell. L-mode concentrates strongly on the query cell and its neighbors; H-mode is spread across the board.">
+      <figcaption>Attention from one query cell in a Sudoku puzzle. The L-update (left) places roughly 0.81 of its mass in the query's neighborhood, against 0.24 for the H-update (right).</figcaption>
+    </figure>
+
+    <h2>The two states depend on each other</h2>
+    <p>We also freeze one state and count how many decoded tokens change in the other. Freezing either state collapses final accuracy to 0% on both tasks, compared with 55.1% on Sudoku and 71.0% on Maze on the same puzzles when nothing is frozen. The other state's response depends on the task:</p>
+    <ul>
+      <li><strong>Sudoku:</strong> freezing <i>z</i><sub>H</sub> cuts total content changes in <i>z</i><sub>L</sub> from 1258.2 to 239.5. Freezing <i>z</i><sub>L</sub> has a seed-dependent effect on <i>z</i><sub>H</sub>.</li>
+      <li><strong>Maze:</strong> freezing either state increases changes in the other, from 1345.8 to 5277.1 for <i>z</i><sub>L</sub> (with substantial variation across seeds) and from 871.9 to 2400.0 for <i>z</i><sub>H</sub>.</li>
+    </ul>
+
+    <h2>What this does and does not show</h2>
+    <p>These results suggest that specialization does not require separate parameters. It requires a clear signal of which state is being updated, which can come from asymmetric input or from a separable level token.</p>
+    <p>The evidence has clear limits. We study two synthetic, fully observable grid tasks with a 4-layer Transformer and a one-step gradient, so this is not a claim of universality. The terms "fully committed" and "partially committed" describe how decoded states look, not what computation each state performs, and attention is only a partial view of that computation. A natural next step is to apply the same diagnostics to stronger two-state recurrent reasoners.</p>
+
+    <h2>Citation</h2>
+<pre><code>@inproceedings{shen2026onemodel,
+  title     = {One Model, Two Roles: Emergent Specialization
+               in a Shared Recurrent Transformer},
+  author    = {Shen, Jucheng and Su, Barbara and Kyrillidis, Anastasios},
+  booktitle = {Advances in Neural Information Processing Systems},
+  year      = {2026}
+}</code></pre>
+  </main>
+
+  <footer>
+    &copy; 2026 Jucheng Shen.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CadLLM | Jucheng Shen</title>
+  <meta name="description" content="CadLLM is a training-free controller that uses a diffusion LLM's own confidence to speed up decoding with competitive accuracy.">
+  <link rel="icon" href="../../favicon.ico?v=20261030-1" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="../../favicon.svg?v=20261030-1" type="image/svg+xml" sizes="any">
+  <link rel="stylesheet" href="../../post.css?v=20261101-4">
+</head>
+<body>
+  <main class="post">
+    <a class="back" href="../">&larr; Blog</a>
+
+    <h1>CadLLM</h1>
+    <p class="subtitle">Improving the Throughput of Diffusion-based Large Language Models via a Training-Free Confidence-Aware Calibration</p>
+    <p class="meta"><strong>Jucheng Shen</strong>, <a href="https://www.linkedin.com/in/gauravsarkar7888/" target="_blank" rel="noopener noreferrer">Gaurav Sarkar</a>, <a href="https://sites.google.com/view/hey-yeonju" target="_blank" rel="noopener noreferrer">Yeonju Ro</a>, <a href="https://www.linkedin.com/in/sharathnittursridhar/" target="_blank" rel="noopener noreferrer">Sharath Nittur Sridhar</a>, <a href="https://www.ece.utexas.edu/people/faculty/atlas-wang" target="_blank" rel="noopener noreferrer">Zhangyang Wang</a>, <a href="https://www.cs.utexas.edu/~akella/" target="_blank" rel="noopener noreferrer">Aditya Akella</a>, <a href="https://ksouvik52.github.io/" target="_blank" rel="noopener noreferrer">Souvik Kundu</a></p>
+    <p class="meta venue">Findings of ACL 2026 | <a href="https://aclanthology.org/2026.findings-acl.478/" target="_blank" rel="noopener noreferrer">paper</a> | <a href="https://github.com/juchengshen/CadLLM" target="_blank" rel="noopener noreferrer">code</a></p>
+
+    <img class="hero" src="../../assets/img/thumb-cadllm.svg" width="440" height="275" alt="A controller reads the model's confidence and sets the decoding block size: large when confident, small when not.">
+
+    <p class="summary"><strong>In short:</strong> diffusion LLMs already report how confident they are in each token. CadLLM uses that signal to spend compute where the model is still uncertain and save it where predictions have settled. It needs no retraining, and it improves throughput by 1.1&ndash;2.28&times; over the Fast-dLLM threshold baseline on LLaDA with competitive accuracy.</p>
+
+    <h2>Why decoding is slow</h2>
+    <p>An autoregressive language model produces tokens in a single left-to-right pass. A masked diffusion LLM instead refines a noisy sequence over many denoising steps, and this repeated refinement can make token generation much slower.</p>
+    <p><a href="https://arxiv.org/abs/2505.22618" target="_blank" rel="noopener noreferrer">Fast-dLLM</a> speeds this up by unmasking, in parallel, every position whose confidence clears a threshold. But its plan is static: fixed block sizes, a fixed number of steps per block, fixed sampling breadth, and a fixed commit threshold.</p>
+
+    <h2>Confidence is not uniform</h2>
+    <p>A static plan would be fine if every part of a sequence were equally hard, but it is not. Within a block, confidence rises quickly and then plateaus. Across blocks, some stabilize immediately while others stay uncertain. A fixed schedule therefore over-refines easy blocks and under-serves harder ones.</p>
+    <figure>
+      <img src="../../assets/img/posts/cadllm/confidence.webp" width="1500" height="445" loading="lazy" alt="Three heatmaps of mean token confidence by block and step for GSM8K, HumanEval and MBPP. Confidence varies clearly across blocks and steps.">
+      <figcaption>Per-block, per-step confidence on three datasets. Lighter means higher confidence.</figcaption>
+    </figure>
+    <p>This work grew out of our earlier workshop paper, <a href="https://arxiv.org/abs/2511.02077" target="_blank" rel="noopener noreferrer">OSDT</a>, which found that confidence trajectories are nearly identical across inputs from the same dataset, so thresholds calibrated on a single sequence can be reused for later inputs. CadLLM goes further by adapting block size, steps, vocabulary, and threshold during decoding.</p>
+    <p>Sampling breadth has its own cost. Softmax runs at every step, and running it over the full vocabulary of about 50K tokens is nearly an order of magnitude slower than using a small subset.</p>
+    <figure class="narrow">
+      <img src="../../assets/img/posts/cadllm/softmax-latency.webp" width="1100" height="724" loading="lazy" alt="Line chart of softmax latency against the number of tokens. Latency stays near 5 microseconds up to 1000 tokens and reaches 49.4 microseconds for the full vocabulary.">
+      <figcaption>Softmax latency against vocabulary size, on a log scale.</figcaption>
+    </figure>
+
+    <h2>One signal, four policies</h2>
+    <p>After each forward pass, CadLLM reads the model's confidence and feeds it back into a closed-loop controller. That single signal, together with generation progress, drives four decisions:</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Policy</th><th>What it controls</th><th>How it adapts</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Block size <i>B<sub>t</sub></i></td><td>How many tokens to decode in parallel</td><td>Larger when confidence is high</td></tr>
+          <tr><td>Steps <i>S<sub>t</sub></i></td><td>How much refinement to allocate</td><td>More when confidence is low</td></tr>
+          <tr><td>Vocabulary <i>V<sub>t</sub></i></td><td>How broad the candidate set is</td><td>Wider early, under low confidence, or when tokens start repeating</td></tr>
+          <tr><td>Threshold <i>&tau;<sub>t</sub></i></td><td>When to commit a token</td><td>Strict at first, relaxing as generation progresses</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <figure>
+      <img src="../../assets/img/posts/cadllm/overview.webp" width="1338" height="1070" loading="lazy" alt="Overview diagram. High confidence maps to a large block, few steps, a low threshold and a small vocabulary; low confidence maps to the opposite. Below, the controller updates these parameters in a loop around the diffusion LLM.">
+      <figcaption>The controller replaces static parameters with values updated from confidence during decoding.</figcaption>
+    </figure>
+    <p>Each policy is a simple rule, using linear interpolation with clipping. For example, with <i>c&#772;</i> as the recent mean confidence:</p>
+    <p class="equation">
+      <span><i>B<sub>t</sub></i> = clip(<i>B</i><sub>min</sub> + (<i>B</i><sub>max</sub> &minus; <i>B</i><sub>min</sub>) &middot; <i>c&#772;</i>, <i>B</i><sub>min</sub>, <i>B</i><sub>max</sub>)</span>
+    </p>
+    <p>This simplicity is deliberate. It isolates the benefit of adaptivity itself and adds only a multiply-add per policy per block at inference time.</p>
+
+    <h2>Results</h2>
+    <p>We compare against both Fast-dLLM variants on LLaDA, on a single NVIDIA H100.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Benchmark</th><th class="num">Length</th><th>CadLLM</th><th>Fast-dLLM (factor)</th><th>Fast-dLLM (threshold)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>GSM8K</td><td class="num">256</td><td class="strong">78.01%<br>120.07 (1.33&times;)</td><td>76.19%<br>119.18 (1.32&times;)</td><td>79.00%<br>90.40</td></tr>
+          <tr><td>GSM8K</td><td class="num">512</td><td class="strong">75.44%<br>107.79 (1.37&times;)</td><td>74.45%<br>100.66 (1.27&times;)</td><td>75.28%<br>78.77</td></tr>
+          <tr><td>MATH</td><td class="num">256</td><td class="strong">32.06%<br>106.84 (1.34&times;)</td><td>32.22%<br>109.97 (1.38&times;)</td><td>32.40%<br>79.58</td></tr>
+          <tr><td>MATH</td><td class="num">512</td><td class="strong">34.94%<br>117.21 (1.14&times;)</td><td>35.40%<br>111.86 (1.08&times;)</td><td>32.06%<br>103.18</td></tr>
+          <tr><td>MBPP</td><td class="num">256</td><td class="strong">24.00%<br>99.86 (1.37&times;)</td><td>21.20%<br>96.01 (1.31&times;)</td><td>25.60%<br>73.15</td></tr>
+          <tr><td>MBPP</td><td class="num">512</td><td class="strong">13.00%<br>104.62 (1.35&times;)</td><td>13.20%<br>100.73 (1.30&times;)</td><td>14.20%<br>77.71</td></tr>
+          <tr><td>HumanEval</td><td class="num">256</td><td class="strong">35.97%<br>220.81 (2.28&times;)</td><td>32.92%<br>132.28 (1.37&times;)</td><td>37.19%<br>96.84</td></tr>
+          <tr><td>HumanEval</td><td class="num">512</td><td class="strong">43.29%<br>163.72 (1.74&times;)</td><td>41.46%<br>131.14 (1.38&times;)</td><td>45.12%<br>94.41</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-note">Each cell shows accuracy, tokens per second, and improvement relative to the threshold baseline at the same generation length.</p>
+    <p>CadLLM also reaches 1.1&ndash;1.4&times; gains on DREAM across the same four benchmarks. It works with both prefix-only and dual KV caching.</p>
+
+    <h2>What each policy contributes</h2>
+    <p>Turning policies off one at a time on GSM8K shows that they play different roles:</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Mode</th><th class="num">Tokens/s</th><th class="num">Accuracy</th><th class="num">NFE</th></tr>
+        </thead>
+        <tbody>
+          <tr class="strong"><td>All policies on</td><td class="num">121.72</td><td class="num">78.01%</td><td class="num">86,816</td></tr>
+          <tr><td>No adaptive vocabulary</td><td class="num">119.67</td><td class="num">74.41%</td><td class="num">86,666</td></tr>
+          <tr><td>No adaptive steps</td><td class="num">136.76</td><td class="num">76.12%</td><td class="num">76,955</td></tr>
+          <tr><td>No adaptive block size</td><td class="num">111.19</td><td class="num">78.32%</td><td class="num">92,344</td></tr>
+          <tr><td>No adaptive threshold</td><td class="num">34.57</td><td class="num">78.17%</td><td class="num">337,664</td></tr>
+          <tr><td>All policies off</td><td class="num">34.32</td><td class="num">78.01%</td><td class="num">337,664</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-note">GSM8K at generation length 256. NFE is the number of function evaluations.</p>
+    <ul>
+      <li><strong>Threshold</strong> dominates efficiency. Removing it cuts throughput by 71.6% and nearly quadruples forward passes, with accuracy nearly unchanged.</li>
+      <li><strong>Block size</strong> mainly affects computation, not accuracy.</li>
+      <li><strong>Steps</strong> trade speed against accuracy.</li>
+      <li><strong>Vocabulary</strong> mainly protects accuracy, with little effect on throughput.</li>
+    </ul>
+
+    <h2>Limitations</h2>
+    <p>Results can remain sensitive to a few hyperparameters that may need careful tuning, so automated search is a natural next step. The linear rules are also intentionally minimal, and learned policies could tighten the trade-off between efficiency and quality further.</p>
+
+    <h2>Citation</h2>
+<pre><code>@inproceedings{shen2026cadllm,
+  title     = {Improving the Throughput of Diffusion-based Large Language
+               Models via a Training-Free Confidence-Aware Calibration},
+  author    = {Shen, Jucheng and Sarkar, Gaurav and Ro, Yeonju and
+               Sridhar, Sharath Nittur and Wang, Zhangyang and
+               Akella, Aditya and Kundu, Souvik},
+  booktitle = {Findings of the Association for Computational Linguistics: ACL 2026},
+  pages     = {9826--9837},
+  year      = {2026},
+  doi       = {10.18653/v1/2026.findings-acl.478}
+}</code></pre>
+  </main>
+
+  <footer>
+    &copy; 2026 Jucheng Shen.
+  </footer>
+</body>
+</html>
