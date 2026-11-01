@@ -272,6 +272,16 @@ hr {
 }
 
 /* Publications */
+.pub-note {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.7rem;
+  font-weight: normal;
+  font-style: italic;
+  color: var(--text-light);
+  letter-spacing: 0;
+  margin-left: 0.4rem;
+}
+
 .pub {
   margin-bottom: 1.1rem;
   display: flex;
