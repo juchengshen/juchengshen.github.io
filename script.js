@@ -18,6 +18,20 @@ function adaptLayout() {
 adaptLayout();
 mobileLayout.addEventListener('change', adaptLayout);
 
+// "scroll ↓" next to the News heading, while the panel has more below
+const newsPanel = document.querySelector('.news-panel');
+const newsScroll = document.querySelector('.news-scroll');
+
+function updateNewsHint() {
+  const more = newsPanel.scrollHeight - newsPanel.clientHeight - newsPanel.scrollTop > 4;
+  newsScroll.classList.toggle('visible', more);
+}
+
+newsPanel.addEventListener('scroll', updateNewsHint, { passive: true });
+window.addEventListener('resize', updateNewsHint);
+mobileLayout.addEventListener('change', updateNewsHint);
+updateNewsHint();
+
 resourcesTrigger.addEventListener('click', (event) => {
   event.preventDefault();
   if (!resources.hidden) return;

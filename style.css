@@ -11,13 +11,14 @@
   --text: #1a1a1a;
   --text-light: #666666;
   --border: #e5e5e5;
+  --link: #598be7;
 }
 
 /* Base */
 html {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 18.5px;
-  line-height: 1.35;
+  font-family: "Source Sans 3", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 19.5px;
+  line-height: 1.4;
   color: var(--text);
   background: var(--bg);
   overflow-y: scroll;
@@ -62,26 +63,13 @@ body {
 }
 
 .social-links a {
-  color: var(--text);
   text-decoration: none;
-  border-bottom: none;
   font-size: 0.8rem;
-  font-style: italic;
   transition: color 0.2s ease;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   line-height: 1.5;
-}
-
-.social-links a svg {
-  vertical-align: middle;
-  flex-shrink: 0;
-}
-
-.social-links a:hover {
-  color: var(--text);
-  border-bottom: none;
 }
 
 .sidebar-news {
@@ -96,10 +84,30 @@ body {
   scrollbar-gutter: stable;
 }
 
+.news-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
 .news-heading {
   font-size: 1rem;
+  font-weight: 600;
   line-height: 1.45;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
+}
+
+/* shown only while the news panel has more to scroll */
+.news-scroll {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.news-scroll.visible {
+  opacity: 1;
 }
 
 .news-item {
@@ -145,7 +153,7 @@ body {
 .content {
   width: 100%;
   position: relative;
-  font-size: 16.5px;
+  font-size: 17.5px;
 }
 
 /* Resources overlay — covers the main content column only */
@@ -200,9 +208,8 @@ body {
 }
 
 .resources-body h3 {
-  font-family: "Palatino Linotype", Palatino, "Book Antiqua", serif;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   margin-top: 1.2rem;
   margin-bottom: 0.5rem;
   letter-spacing: -0.01em;
@@ -235,28 +242,26 @@ body {
 
 /* Bio paragraphs — more breathing room */
 .bio p {
-  line-height: 1.45;
+  line-height: 1.55;
   margin-bottom: 1.1rem;
 }
 
-/* Links — same font color, dotted underline */
+/* Links — blue, underlined on hover */
 a {
-  color: var(--text);
+  color: var(--link);
   text-decoration: none;
-  border-bottom: 1px dotted var(--text-light);
-  padding-bottom: 1px;
 }
 
 a:hover {
-  color: var(--text-light);
-  border-bottom-style: dotted;
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* Sections */
 h2 {
-  font-family: "Palatino Linotype", Palatino, "Book Antiqua", serif;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 21px;
+  font-weight: 600;
   margin-bottom: 0.9rem;
   letter-spacing: -0.01em;
 }
@@ -273,7 +278,6 @@ hr {
 
 /* Publications */
 .pub-note {
-  font-family: Georgia, "Times New Roman", serif;
   font-size: 0.7rem;
   font-weight: normal;
   font-style: italic;
@@ -298,10 +302,10 @@ hr {
 }
 
 .pub-title {
-  font-weight: normal;
-  font-size: 0.8rem;
-  margin-bottom: 0.25rem;
-  line-height: 1.4;
+  font-weight: 700;
+  font-size: 0.92rem;
+  margin-bottom: 0.3rem;
+  line-height: 1.3;
 }
 
 .pub-authors {
@@ -312,17 +316,18 @@ hr {
 
 .pub-authors strong {
   color: var(--text);
+  font-weight: 700;
 }
 
 .pub-venue {
   font-size: 0.8rem;
   color: var(--text);
-  font-style: italic;
   margin-bottom: 0;
 }
 
 .pub-venue em {
-  font-weight: 700;
+  font-style: italic;
+  font-weight: normal;
 }
 
 /* Footer */
@@ -436,15 +441,15 @@ footer {
 
 @media (max-width: 600px) {
   html {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   h2 {
-    font-size: 17px;
+    font-size: 18px;
   }
 
   .content {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   .container {
@@ -460,10 +465,13 @@ footer {
     height: 80px;
   }
 
-  .pub-title,
+  .pub-title {
+    font-size: 17.5px;
+  }
+
   .pub-authors,
   .pub-venue {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   .pub {

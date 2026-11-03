@@ -11,11 +11,12 @@
   --text-light: #666666;
   --border: #e5e5e5;
   --panel: #faf9f6;
+  --link: #598be7;
 }
 
 html {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 18.5px;
+  font-family: "Source Sans 3", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 19.5px;
   color: var(--text);
   background: var(--bg);
   overflow-y: scroll;
@@ -27,47 +28,49 @@ body {
 }
 
 a {
-  color: var(--text);
+  color: var(--link);
   text-decoration: none;
-  border-bottom: 1px dotted var(--text-light);
-  padding-bottom: 1px;
 }
 
 a:hover {
-  color: var(--text-light);
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .post {
   max-width: 780px;
   margin: 0 auto;
   padding: 1.75rem 2rem 1rem;
-  font-size: 16.5px;
-  line-height: 1.6;
+  font-size: 17.5px;
+  line-height: 1.65;
 }
 
 .back {
   display: inline-block;
   margin-bottom: 1.75rem;
-  border-bottom: none;
+  color: var(--text-light);
   font-size: 0.8rem;
-  font-style: italic;
+}
+
+.back:hover {
+  color: var(--text);
 }
 
 h1,
 h2 {
-  font-family: "Palatino Linotype", Palatino, "Book Antiqua", serif;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: -0.005em;
   line-height: 1.25;
 }
 
 h1 {
-  font-size: 30px;
+  font-size: 32px;
   margin-bottom: 0.3rem;
 }
 
 h2 {
-  font-size: 20px;
+  font-size: 22px;
   margin: 2rem 0 0.6rem;
 }
 
@@ -218,8 +221,6 @@ pre {
 
 .blog-thumb {
   flex: 0 0 176px;
-  border-bottom: none;
-  padding-bottom: 0;
 }
 
 .blog-thumb img {
@@ -257,12 +258,12 @@ footer {
 
 @media (max-width: 600px) {
   html {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   .post {
     padding: 1rem 1.25rem;
-    font-size: 15px;
+    font-size: 16px;
   }
 
   h1 {
@@ -299,7 +300,7 @@ footer {
   }
 
   .blog-entry p {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   footer {
