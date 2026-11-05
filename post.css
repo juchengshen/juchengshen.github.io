@@ -15,7 +15,7 @@
 }
 
 html {
-  font-family: "Source Sans 3", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, ".SFNSText-Regular", "San Francisco", Roboto, "Segoe UI", "Helvetica Neue", "Lucida Grande", Arial, sans-serif;
   font-size: 19.5px;
   color: var(--text);
   background: var(--bg);
