@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Two Roles in a World Model | Jucheng Shen</title>
+  <meta name="description" content="AIR's two-role specialization carries over to a recurrent world model for DeepMind Control; memory additionally needs gradients through time.">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="../../favicon.ico?v=20261103-1" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="../../favicon.svg?v=20261103-1" type="image/svg+xml" sizes="any">
+  <link rel="stylesheet" href="../../post.css?v=20261108-1">
+  <style>
+    .draft {
+      display: inline-block;
+      margin: 0.4rem 0 1.2rem;
+      padding: 0.15rem 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.75rem;
+      color: var(--text-light);
+    }
+    .summary ul { margin-top: -0.3rem; }
+    .summary > :last-child { margin-bottom: 0; }
+    .d4-panels { display: flex; flex-wrap: wrap; gap: 14px 24px; justify-content: center; }
+    .d4-panels > div { text-align: center; }
+    .d4-panels img { display: block; width: 100%; height: auto; }
+    @media (min-width: 680px) { .d4-panels img { width: auto; height: 240px; } }
+    .d4-sub { margin-top: 4px; font-size: 0.75rem; color: var(--text-light); }
+    .chart { margin: 1.4rem 0; }
+    .chart-title { font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; }
+    .chart-key { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 0.7rem; color: var(--text-light); margin-bottom: 2px; }
+    .chart-key span { display: inline-flex; align-items: center; gap: 6px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .plot svg { display: block; width: 100%; font-family: inherit; }
+    .variants {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 18px;
+      margin: 1.4rem 0 0.6rem;
+    }
+    .variant svg { display: block; width: 100%; max-width: 230px; height: auto; margin: 0 auto; background: var(--panel); border-radius: 8px; }
+    .wd, .wp, .wn { opacity: 0; }
+    @media (prefers-reduced-motion: no-preference) {
+      @keyframes inL { 0%, 1% { opacity: 0; transform: translate(0, 0); } 3% { opacity: 1; transform: translate(0, 0); } 15% { opacity: 1; transform: translate(0, 18px); } 17%, 100% { opacity: 0; transform: translate(0, 18px); } }
+      @keyframes inH { 0%, 33% { opacity: 0; transform: translate(0, 0); } 35% { opacity: 1; transform: translate(0, 0); } 46% { opacity: 1; transform: translate(50px, 19px); } 48%, 100% { opacity: 0; transform: translate(50px, 19px); } }
+      @keyframes lh { 0%, 35% { opacity: 0; transform: translate(0, 0); } 37% { opacity: 1; transform: translate(0, 0); } 46% { opacity: 1; transform: translate(15px, 0); } 48%, 100% { opacity: 0; transform: translate(15px, 0); } }
+      @keyframes out { 0%, 69% { opacity: 0; transform: translate(0, 0); } 71% { opacity: 1; transform: translate(0, 0); } 82% { opacity: 1; transform: translate(0, -17px); } 84%, 100% { opacity: 0; transform: translate(0, -17px); } }
+      @keyframes upL { 0%, 15% { opacity: 0; } 18%, 33% { opacity: 1; } 37%, 100% { opacity: 0; } }
+      @keyframes upH { 0%, 46% { opacity: 0; } 49%, 65% { opacity: 1; } 69%, 100% { opacity: 0; } }
+      .d-inL { animation: inL 5.5s linear infinite; }
+      .d-inH { animation: inH 5.5s linear infinite; }
+      .d-lh { animation: lh 5.5s linear infinite; }
+      .d-out { animation: out 5.5s linear infinite; }
+      .p-L, .n-L { animation: upL 5.5s linear infinite; }
+      .p-H, .n-H { animation: upH 5.5s linear infinite; }
+    }
+    .variant .v-name { margin-top: 6px; font-size: 0.8rem; font-weight: 600; text-align: center; }
+    .variant .v-desc { font-size: 0.7rem; line-height: 1.4; color: var(--text-light); text-align: center; }
+    .note { font-size: 0.75rem; color: var(--text-light); }
+  </style>
+</head>
+<body>
+  <main class="post">
+    <a class="back" href="../">&larr; Blog</a>
+
+    <h1>Two Roles in a World Model</h1>
+    <p class="subtitle">AIR's specialization carries over from puzzles to a recurrent world model</p>
+    <p class="meta"><strong>Jucheng Shen</strong></p>
+    <p class="meta venue">Work in progress | follow-up to <a href="../air/">One Model, Two Roles</a></p>
+    <span class="draft">Draft, Nov 8, 2026</span>
+
+    <div class="summary">
+      <p><strong>TL;DR:</strong> In <a href="../air/">AIR</a>, one network updates two latent states, and only one of the two updates sees the input. On puzzles, that alone was enough for the two states to take on different jobs. Here we use AIR as a world model that predicts video of simulated robots one step at a time, and the same split shows up again, both on a single task and in a model trained on all 18 tasks of DeepMind Control. Two caveats:</p>
+      <ul>
+        <li>To remember what a single frame cannot show, such as how fast something is moving, the model needs gradients through time. AIR's usual one-step gradient does not provide them.</li>
+        <li>One shared network does as well as two separate ones on a single task, but falls behind once the model has to learn all 18.</li>
+      </ul>
+    </div>
+
+    <h2>Setup</h2>
+    <p>A world model learns how an environment behaves. Given what an agent has seen so far and the action it takes, the model predicts what the agent will see next. Once it is good enough, the agent can practise inside the model instead of in the real environment. <a href="https://danijar.com/project/dreamer4/" target="_blank" rel="noopener noreferrer">Dreamer&nbsp;4</a> is a recent example, and it has two parts. A tokenizer compresses each video frame into a handful of latent tokens. A large dynamics Transformer then predicts the next frame's tokens from the actions and the tokens of earlier frames, attending over all the frames that came before.</p>
+    <figure class="d4">
+      <div class="d4-panels">
+        <div><img src="../../assets/img/posts/airwm/d4_tok.svg" width="224" height="199" alt="Dreamer 4's causal tokenizer: a block-causal encoder turns masked image patches into latent tokens z, and a block-causal decoder turns them back into frames."><div class="d4-sub">(a) Tokenizer: we keep it, frozen</div></div>
+        <div><img src="../../assets/img/posts/airwm/d4_dyn.svg" width="254" height="199" alt="Dreamer 4's interactive dynamics: a block-causal Transformer with one causal time layer and three space layers per block reads actions, noise levels and step sizes, and noised latents, and predicts clean latents."><div class="d4-sub">(b) Dynamics: we replace it with AIR</div></div>
+      </div>
+      <figcaption>Dreamer&nbsp;4's world model, from <a href="https://danijar.com/project/dreamer4/" target="_blank" rel="noopener noreferrer">Hafner et al. (2025)</a>, shown on Minecraft. In (b), <i>a</i> is the action and <i>t</i>, <i>d</i> control how much noise is added to the tokens during training (its shortcut-forcing objective); our model does not use this part and predicts the next tokens directly.</figcaption>
+    </figure>
+    <p>We keep Dreamer&nbsp;4's tokenizer, frozen, and replace its Transformer with AIR. As a reminder, AIR has one network that updates two latent states, <i>z</i><sub>L</sub> and <i>z</i><sub>H</sub>, and only the update of <i>z</i><sub>L</sub> sees the input. On puzzles the input is the same at every step. A world model is harder in three ways: a new frame arrives at every step; some things, like velocity, cannot be read off any single frame and have to be remembered; and when the model imagines the future, there are no frames at all.</p>
+    <p>At each time step, we combine the current frame's latent tokens, the action and a task token into one input <i>x</i><sub><i>t</i></sub>. The network then runs six updates (L, L, H, L, L, H), and we read the prediction of the next frame from <i>z</i><sub>H</sub>. The two states are then handed to the next time step. There is no attention over past frames, so these two states are the model's only memory. We compare three ways of wiring a step:</p>
+
+    <div class="variants" id="variants"></div>
+    <p class="note">We train every model in two ways: with AIR's one-step gradient, which stops the gradient at the end of each time step, or with backpropagation through time (BPTT) over 32 steps. For clarity, the animation shows one L-update followed by one H-update; the real model runs six updates per step (L, L, H, L, L, H). Model size and optimizer are AIR's defaults; we did not tune anything for accuracy.</p>
+
+    <h2>1. The two states take on different roles</h2>
+    <p>How can we tell whether the two states do different jobs? The prediction head is trained to read the next frame from <i>z</i><sub>H</sub>. We apply the same head to <i>z</i><sub>L</sub> as well. If the two states held the same information, the head would do about equally well on both. We call <i>z</i><sub>L</sub>'s error divided by <i>z</i><sub>H</sub>'s the <strong>readout ratio</strong>: a value near 1 means the states are interchangeable, and a large value means only <i>z</i><sub>H</sub> holds the prediction.</p>
+    <figure class="chart">
+      <div class="chart-title">Readout ratio on cup-catch</div>
+      <div class="plot" id="fig-ratio"></div>
+      <figcaption>Each dot is one seed; the number on the right is the mean. Log scale.</figcaption>
+    </figure>
+    <p>In air, reading the prediction from <i>z</i><sub>L</sub> is hundreds of times worse than from <i>z</i><sub>H</sub> with BPTT, and still more than 15 times worse with the one-step gradient. In sym, where the frame goes into both updates, the ratio stays close to 1 in every seed. The two-network models split just like air. So the split does not come from giving each state its own weights. It comes from letting only one update see the frame.</p>
+    <p>This does not mean <i>z</i><sub>L</sub> is empty. A linear probe can still read the simulator state from it quite well. It just keeps that information in a form the prediction head cannot use, much like the scratchpad role <i>z</i><sub>L</sub> played on puzzles.</p>
+    <p>Cup-catch is a single task, so we also trained one model on all 18 tasks of the DMC Visual Control suite, with about 18 times as much data. The picture is the same on every task:</p>
+    <figure class="chart">
+      <div class="chart-title">Readout ratio per task, 18-task models (BPTT)</div>
+      <div class="chart-key"><span><i class="dot" style="background:#4f7fd6"></i>air</span><span><i class="dot" style="background:#807c75"></i>sym</span></div>
+      <div class="plot" id="fig-tasks"></div>
+      <figcaption>Geometric mean over 3 seeds; the number on the right is air's. On every task, even air's lowest seed is above sym's highest.</figcaption>
+    </figure>
+
+    <h2>2. Memory needs gradients through time</h2>
+    <p>Splitting the work is one thing; remembering is another. With AIR's one-step gradient, the loss at one time step never sends a learning signal back to earlier steps. On puzzles that is fine, because the puzzle is shown again at every step and nothing has to be carried over. In a world model it matters. A single frame shows where things are but not how fast they move, so the model has to carry that forward itself, and nothing in the one-step gradient tells it to.</p>
+    <p>To measure this, we fit a linear probe that predicts the true simulator state (positions and velocities) from <i>z</i><sub>H</sub> while the model is imagining, and test it on episodes it was not fit on. If <i>z</i><sub>H</sub> only knew what the current frame shows, it would score about the same as this probe applied to the frame itself, marked by the dashed line.</p>
+    <figure class="chart">
+      <div class="chart-title">How much of the true state <i>z</i><sub>H</sub> holds (R&sup2;), cup-catch</div>
+      <div class="plot" id="fig-r2"></div>
+      <figcaption>Each dot is one seed. Dashed line: the same probe applied to the current frame alone.</figcaption>
+    </figure>
+    <p>With the one-step gradient, every model stays fairly close to that line: <i>z</i><sub>H</sub> knows only a little more than the current frame shows. With BPTT, air reaches an R&sup2; of 0.81, and its error on the first predicted frame drops about 9 times. The 18-task models follow the same pattern: air trained with BPTT reaches 0.50, while the one-step models reach 0.38&ndash;0.39 and the frame alone 0.40.</p>
+
+    <h2>3. Accuracy</h2>
+    <p>Finally, how good are the predictions? The table shows the error when the model sees 8 frames and then imagines the next 24 on its own. All models here are trained with BPTT.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>BPTT model</th><th class="num">cup-catch</th><th class="num">18 tasks</th></tr>
+        </thead>
+        <tbody>
+          <tr class="strong"><td>air</td><td class="num">0.0201</td><td class="num">0.0517</td></tr>
+          <tr><td>sym</td><td class="num">0.0289</td><td class="num">0.0699</td></tr>
+          <tr><td>hrm_half (two networks, same parameters)</td><td class="num">0.0211</td><td class="num">0.0403*</td></tr>
+          <tr><td>hrm (two networks, 2&times; parameters)</td><td class="num">0.0303</td><td class="num">0.0457*</td></tr>
+          <tr><td>repeat the last frame</td><td class="num">0.236</td><td class="num">0.165</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-note">Mean squared error in latent space, lower is better. Mean over 3 seeds; * one seed so far.</p>
+    <p>Sending the frame only into L pays off: air's error is 30% lower than sym's on cup-catch and 26% lower on the 18 tasks. The comparison with separate networks is more mixed. On cup-catch, one shared network does about as well as two half-size networks with the same number of parameters (0.0201 against 0.0211). On the 18 tasks it does not, and hrm_half is 22% more accurate. The two-network results on 18 tasks come from a single seed so far, but air's three seeds differ by only about 7%, so a gap this large is unlikely to be noise.</p>
+
+    <h2>What it means</h2>
+    <ul>
+      <li><strong>Where the input enters decides the roles.</strong> The split we saw on puzzles survives continuous dynamics, changing frames and imagination, and it does not need separate weights.</li>
+      <li><strong>How the gradient flows decides what gets remembered.</strong> HRM, TRM and AIR all train with a one-step gradient, and they all work on tasks where the input stays the same. Once the input changes over time, that gradient no longer teaches the model what to keep.</li>
+      <li><strong>Sharing one network has a cost when there is a lot to learn.</strong> We cannot yet tell whether the cost comes from sharing the weights or from each update being twice as deep as in hrm_half.</li>
+    </ul>
+
+    <h2>Next steps</h2>
+    <ul>
+      <li>Train air with a 2-layer block, which matches hrm_half's depth and compute, to tell those two explanations apart.</li>
+      <li>Put the model to use the way world models are meant to be used: for planning, or for training a policy inside it.</li>
+    </ul>
+  </main>
+
+  <footer>
+    &copy; 2026 Jucheng Shen.
+  </footer>
+
+  <script>
+  (function () {
+    var C = { ink: "#1a1a1a", soft: "#666666", grid: "#ebe8e2", L: "#4f7fd6", Lf: "#eef3fc", H: "#df6f64", Hf: "#fcefed", other: "#807c75" };
+    var NS = 'font-family="-apple-system, BlinkMacSystemFont, San Francisco, Roboto, Segoe UI, Helvetica Neue, Arial, sans-serif"';
+
+    function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+    // "z_L" -> z with subscript L, in SVG
+    function sub(s) {
+      return esc(s).replace(/([A-Za-zẑ]+)_\{?([A-Za-z0-9+]+)\}?/g,
+        '<tspan font-style="italic">$1</tspan><tspan dy="0.3em" font-size="0.7em">$2</tspan>');
+    }
+    function t(x, y, s, o) {
+      o = o || {};
+      return '<text x="' + x + '" y="' + y + '" font-size="' + (o.size || 13) + '" fill="' + (o.color || C.ink) +
+        '" text-anchor="' + (o.anchor || "middle") + '"' + (o.weight ? ' font-weight="' + o.weight + '"' : "") + ">" + (o.plain ? esc(s) : sub(s)) + "</text>";
+    }
+    function arrow(x1, y1, x2, y2, col) {
+      return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + (col || "#9a968f") +
+        '" stroke-width="1.6" marker-end="url(#ah)"/>';
+    }
+
+    // ---------- the three wirings, animated like the homepage thumbnails ----------
+    function arr(x1, y1, x2, y2, col) {
+      var dx = x2 - x1, dy = y2 - y1, l = Math.hypot(dx, dy), ux = dx / l, uy = dy / l, k = 7, w = 3.8;
+      var bx = x2 - ux * k, by = y2 - uy * k;
+      return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + bx + '" y2="' + by + '" stroke="' + col + '" stroke-width="2"/>' +
+        '<polygon points="' + x2 + "," + y2 + " " + (bx - uy * w) + "," + (by + ux * w) + " " + (bx + uy * w) + "," + (by - ux * w) + '" fill="' + col + '"/>';
+    }
+    function box(x, y, w, h, fill, cls, extra) {
+      return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="7" fill="' + fill + '"' +
+        (cls ? ' class="' + cls + '"' : "") + (extra || "") + "/>";
+    }
+    function variant(o) {
+      var X = "#3fa56f", G = "#b5b1aa", s = '<svg viewBox="0 0 200 150" role="img" aria-label="' + o.name + '" ' + NS + ">";
+      s += t(55, 14, "x_t", { color: "#23704a" }) + t(145, 14, "ẑ_{t+1}", { color: C.soft });
+      s += arr(55, 21, 55, 41, X);
+      if (o.both) s += arr(65, 19, 118, 41, X);
+      s += arr(145, 41, 145, 22, C.H);
+      // the two states; a tint flashes on the state being updated
+      s += box(20, 42, 70, 44, C.Lf, null, ' stroke="' + C.L + '" stroke-width="1.6"') + box(20, 42, 70, 44, C.L, "wp p-L", ' fill-opacity="0.28"');
+      s += box(110, 42, 70, 44, C.Hf, null, ' stroke="' + C.H + '" stroke-width="1.6"') + box(110, 42, 70, 44, C.H, "wp p-H", ' fill-opacity="0.28"');
+      s += t(55, 69, "z_L", { size: 16 }) + t(145, 69, "z_H", { size: 16 });
+      s += arr(91, 56, 109, 56, C.L) + arr(109, 72, 91, 72, G);
+      // the network(s) doing the updates: one box that turns blue then red, or two boxes
+      s += '<line x1="55" y1="88" x2="55" y2="107" stroke="' + G + '" stroke-width="1.5" stroke-dasharray="3 3"/>';
+      s += '<line x1="145" y1="88" x2="145" y2="107" stroke="' + G + '" stroke-width="1.5" stroke-dasharray="3 3"/>';
+      if (o.shared) {
+        s += box(20, 108, 160, 32, "#8675c6") + box(20, 108, 160, 32, C.L, "wn n-L") + box(20, 108, 160, 32, C.H, "wn n-H");
+        s += t(100, 129, "one network f", { size: 13.5, color: "#fff", weight: 600 });
+      } else {
+        s += box(20, 108, 70, 32, "#8b8983") + box(20, 108, 70, 32, C.L, "wn n-L");
+        s += box(110, 108, 70, 32, "#8b8983") + box(110, 108, 70, 32, C.H, "wn n-H");
+        s += t(55, 129, "f_L", { size: 14, color: "#fff", weight: 600 }) + t(145, 129, "f_H", { size: 14, color: "#fff", weight: 600 });
+      }
+      // moving dots: frame in, L to H, prediction out
+      s += '<circle class="wd d-inL" cx="55" cy="22" r="5" fill="' + X + '"/>';
+      if (o.both) s += '<circle class="wd d-inH" cx="66" cy="20" r="5" fill="' + X + '"/>';
+      s += '<circle class="wd d-lh" cx="92" cy="56" r="5" fill="' + C.L + '"/>';
+      s += '<circle class="wd d-out" cx="145" cy="40" r="5" fill="' + C.H + '"/>';
+      return '<div class="variant">' + s + '</svg><div class="v-name">' + o.name + '</div><div class="v-desc">' + o.desc + "</div></div>";
+    }
+    document.getElementById("variants").innerHTML =
+      variant({ name: "air", shared: true, desc: "The frame goes only into the L-update. One network does both updates." }) +
+      variant({ name: "sym", both: true, shared: true, desc: "The frame goes into both updates. One network does both." }) +
+      variant({ name: "hrm_half / hrm", desc: "The frame goes only into the L-update, but each state has its own network (half-size in hrm_half, full-size in hrm)." });
+
+    // ---------- dot plot, drawn at the container's real width so text stays readable ----------
+    function dotplot(id, cfg) {
+      var el = document.getElementById(id);
+      function draw() {
+        var W = Math.max(280, el.clientWidth), lw = cfg.labelW, vw = 46, x0 = lw, x1 = W - vw;
+        var top = 22, rh = cfg.rowH || 24, gh = 26, y = top, s = "";
+        var lo = cfg.log ? Math.log10(cfg.domain[0]) : cfg.domain[0], hi = cfg.log ? Math.log10(cfg.domain[1]) : cfg.domain[1];
+        var X = function (v) { var u = cfg.log ? Math.log10(v) : v; return x0 + 8 + (u - lo) / (hi - lo) * (x1 - x0 - 16); };
+        var H = top + 6;
+        cfg.rows.forEach(function (r) { H += r.group ? gh : rh; });
+        cfg.ticks.forEach(function (k) {
+          s += '<line x1="' + X(k) + '" y1="' + (top - 4) + '" x2="' + X(k) + '" y2="' + (H - 4) + '" stroke="' + C.grid + '"/>';
+          s += t(X(k), 12, cfg.tick(k), { size: 12, color: C.soft });
+        });
+        if (cfg.ref) {
+          s += '<line x1="' + X(cfg.ref) + '" y1="' + (top - 4) + '" x2="' + X(cfg.ref) + '" y2="' + (H - 4) + '" stroke="#9a968f" stroke-dasharray="4 3"/>';
+        }
+        cfg.rows.forEach(function (r) {
+          if (r.group) {
+            s += t(0, y + 17, r.group, { size: 12, color: C.soft, anchor: "start", weight: 600, plain: true });
+            y += gh; return;
+          }
+          var cy = y + rh / 2;
+          s += t(x0 - 6, cy + 4.5, r.label, { size: 13, anchor: "end", weight: r.hi ? 600 : null, plain: true });
+          s += '<line x1="' + x0 + '" y1="' + cy + '" x2="' + x1 + '" y2="' + cy + '" stroke="#f3f1ec"/>';
+          r.series.forEach(function (se) {
+            se.vals.forEach(function (v, i) {
+              s += '<circle cx="' + X(v) + '" cy="' + cy + '" r="4.6" fill="' + se.color + '" fill-opacity="0.85" stroke="#fff" stroke-width="1.5">' +
+                "<title>" + esc(se.name + (se.vals.length > 1 ? ", seed " + i : "") + ": " + cfg.fmt(v)) + "</title></circle>";
+            });
+          });
+          var m = r.series[0].vals.reduce(function (a, b) { return a + b; }, 0) / r.series[0].vals.length;
+          s += t(x1 + 8, cy + 4.5, cfg.fmt(r.mean != null ? r.mean : m), { size: 12.5, anchor: "start", color: C.soft });
+          y += rh;
+        });
+        el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '" ' + NS + ">" + s + "</svg>";
+      }
+      draw();
+      var w = el.clientWidth;
+      new ResizeObserver(function () { if (el.clientWidth !== w) { w = el.clientWidth; draw(); } }).observe(el);
+    }
+
+    function rows(data) {
+      var out = [];
+      data.forEach(function (g) {
+        out.push({ group: g[0] });
+        g[1].forEach(function (r) { out.push({ label: r[0], hi: r[0] === "air", series: [{ name: r[0], vals: r[1], color: r[0] === "air" ? C.L : C.other }] }); });
+      });
+      return out;
+    }
+    var ratioFmt = function (v) { return (v >= 10 ? v.toFixed(0) : v.toFixed(1)) + "×"; };
+
+    // cup-catch, per seed (W&B final summaries)
+    dotplot("fig-ratio", {
+      log: true, domain: [0.8, 700], ticks: [1, 10, 100], tick: function (k) { return k + "×"; }, fmt: ratioFmt, labelW: 78,
+      rows: rows([
+        ["BPTT", [["air", [243.3, 257.0, 265.6]], ["sym", [2.03, 1.85, 2.20]], ["hrm_half", [318.5, 262.4, 512.9]], ["hrm", [234.2, 211.5]]]],
+        ["One-step gradient", [["air", [19.4, 15.0, 15.5]], ["sym", [1.006, 1.004, 1.008]], ["hrm_half", [37.0, 32.3, 35.1]], ["hrm", [25.9, 22.6, 23.5]]]]
+      ])
+    });
+
+    dotplot("fig-r2", {
+      domain: [0.35, 0.95], ticks: [0.4, 0.6, 0.8], tick: function (k) { return k.toFixed(1); }, fmt: function (v) { return v.toFixed(2); },
+      labelW: 78, ref: 0.417,
+      rows: rows([
+        ["BPTT", [["air", [0.868, 0.743, 0.833]], ["sym", [0.711, 0.604, 0.718]], ["hrm_half", [0.771, 0.778, 0.859]], ["hrm", [0.700, 0.776]]]],
+        ["One-step gradient", [["air", [0.577, 0.553, 0.531]], ["sym", [0.607, 0.587, 0.593]], ["hrm_half", [0.653, 0.613, 0.612]], ["hrm", [0.533, 0.550, 0.492]]]]
+      ])
+    });
+
+    // 18-task models, geometric mean over 3 seeds: [task, air, sym], sorted by air
+    var TASKS = [
+      ["pendulum-swingup", 1253.5, 3.89], ["cartpole-swingup-sparse", 659.5, 1.03], ["cartpole-balance", 529.3, 1.25],
+      ["cartpole-swingup", 449.4, 1.2], ["finger-turn-easy", 405.3, 1.09], ["cartpole-balance-sparse", 344.5, 1.37],
+      ["reacher-hard", 309.3, 1.04], ["finger-turn-hard", 301.5, 1.06], ["acrobot-swingup", 269.9, 1.5],
+      ["finger-spin", 262.9, 1.36], ["reacher-easy", 247.9, 1.02], ["cheetah-run", 134.0, 1.14],
+      ["hopper-stand", 92.3, 1.38], ["hopper-hop", 60.3, 1.29], ["cup-catch", 41.6, 1.05],
+      ["walker-run", 16.3, 1.17], ["walker-walk", 15.9, 1.2], ["walker-stand", 15.8, 1.21]
+    ];
+    dotplot("fig-tasks", {
+      log: true, domain: [0.8, 2000], ticks: [1, 10, 100, 1000], tick: function (k) { return k + "×"; }, fmt: ratioFmt,
+      labelW: 158, rowH: 22,
+      rows: TASKS.map(function (r) {
+        return { label: r[0], series: [{ name: "sym", vals: [r[2]], color: C.other }, { name: "air", vals: [r[1]], color: C.L }], mean: r[1] };
+      })
+    });
+  })();
+  </script>
+</body>
+</html>
