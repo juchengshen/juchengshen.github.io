@@ -20,7 +20,7 @@
 
     <img class="hero" src="../../assets/img/thumb-cadllm.svg" width="440" height="275" alt="A controller reads the model's confidence and sets the decoding block size: large when confident, small when not.">
 
-    <p class="summary"><strong>In short:</strong> diffusion LLMs already report how confident they are in each token. CadLLM uses that signal to spend compute where the model is still uncertain and save it where predictions have settled. It needs no retraining, and it improves throughput by 1.1&ndash;2.28&times; over the Fast-dLLM threshold baseline on LLaDA with competitive accuracy.</p>
+    <p class="summary"><strong>TL;DR:</strong> Diffusion LLMs already report how confident they are in each token. CadLLM uses that signal to spend compute where the model is still uncertain and save it where predictions have settled. It needs no retraining, and it improves throughput by 1.1&ndash;2.28&times; over the Fast-dLLM threshold baseline on LLaDA with competitive accuracy.</p>
 
     <h2>Why decoding is slow</h2>
     <p>An autoregressive language model produces tokens in a single left-to-right pass. A masked diffusion LLM instead refines a noisy sequence over many denoising steps, and this repeated refinement can make token generation much slower.</p>

@@ -20,7 +20,7 @@
 
     <img class="hero" src="../../assets/img/thumb-air.svg" width="440" height="275" alt="One shared model: with input injected it keeps some cells undecided; without input it commits to every cell.">
 
-    <p class="summary"><strong>In short:</strong> we reuse one Transformer to update two latent states, and only one of the updates sees the input. That single difference is enough for the two states to take on distinct roles. One always holds a complete candidate answer; the other keeps some positions undecided and attends more locally.</p>
+    <p class="summary"><strong>TL;DR:</strong> We reuse one Transformer to update two latent states, and only one of the updates sees the input. That single difference is enough for the two states to take on distinct roles. One always holds a complete candidate answer; the other keeps some positions undecided and attends more locally.</p>
 
     <h2>The question</h2>
     <p>Recurrent reasoning models such as <a href="https://arxiv.org/abs/2506.21734" target="_blank" rel="noopener noreferrer">HRM</a> and <a href="https://arxiv.org/abs/2510.04871" target="_blank" rel="noopener noreferrer">TRM</a> keep two latent states and update them in turn. HRM uses a separate network for each state, while TRM ties them into a single shared network. That raises a simple question: <em>when the same model updates both states, does it learn two different jobs, or does it just process both states in the same way?</em></p>
