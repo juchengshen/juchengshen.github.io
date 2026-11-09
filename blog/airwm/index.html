@@ -137,6 +137,22 @@
     </div>
     <p class="table-note">Mean squared error in latent space, lower is better. Mean over 3 seeds; * one seed so far.</p>
     <p>Sending the frame only into L pays off: air's error is 30% lower than sym's on cup-catch and 26% lower on the 18 tasks. The comparison with separate networks is more mixed. On cup-catch, one shared network does about as well as two half-size networks with the same number of parameters (0.0201 against 0.0211). On the 18 tasks it does not, and hrm_half is 22% more accurate. The two-network results on 18 tasks come from a single seed so far, but air's three seeds differ by only about 7%, so a gap this large is unlikely to be noise.</p>
+    <p>How does this compare to the Transformer we replaced? We also trained a causal Transformer like Dreamer&nbsp;4's dynamics model, without its noise objective, using twice air's parameters and the same data and number of steps. A Transformer has no state of its own to imagine in, so it has to feed each prediction back in as the next frame. To compare fairly, we run our models the same way here.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Cup-catch, fed back</th><th class="num">1st frame</th><th class="num">24th frame</th><th class="num">all 24</th></tr>
+        </thead>
+        <tbody>
+          <tr class="strong"><td>air</td><td class="num">0.0036</td><td class="num">0.0471</td><td class="num">0.0331</td></tr>
+          <tr><td>hrm_half</td><td class="num">0.0038</td><td class="num">0.0486</td><td class="num">0.0355</td></tr>
+          <tr><td>sym</td><td class="num">0.0049</td><td class="num">0.0543</td><td class="num">0.0423</td></tr>
+          <tr><td>Transformer (2&times; parameters)</td><td class="num">0.0033</td><td class="num">0.0677</td><td class="num">0.0394</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-note">Same error as above, mean over 3 seeds. The recurrent models are trained with BPTT.</p>
+    <p>The Transformer is as good as air on the first frame, but its error grows faster the further it imagines. By the 24th frame it is 44% higher than air's, and every Transformer seed is worse than every air seed. Feeding predictions back costs air something too (0.0331, against 0.0201 when it imagines in its own state), so not having to re-read its own outputs is part of what the recurrent state buys. We have only run this on cup-catch, and we did not tune the Transformer.</p>
 
     <h2>What it means</h2>
     <ul>
@@ -148,6 +164,7 @@
     <h2>Next steps</h2>
     <ul>
       <li>Train air with a 2-layer block, which matches hrm_half's depth and compute, to tell those two explanations apart.</li>
+      <li>Run the Transformer baseline on the 18 tasks as well.</li>
       <li>Put the model to use the way world models are meant to be used: for planning, or for training a policy inside it.</li>
     </ul>
   </main>
