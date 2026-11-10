@@ -68,26 +68,25 @@
     <p class="subtitle">AIR's specialization carries over from puzzles to a recurrent world model</p>
     <p class="meta"><strong>Jucheng Shen</strong></p>
     <p class="meta venue">Work in progress | follow-up to <a href="../air/">One Model, Two Roles</a></p>
-    <span class="draft">Draft, Nov 10, 2026</span>
 
     <div class="summary">
       <p><strong>TL;DR:</strong> In <a href="../air/">AIR</a>, one network updates two latent states, and only one of the two updates sees the input. On puzzles, that alone was enough for the two states to take on different jobs. Here we use AIR as a world model that predicts video of simulated robots one step at a time, and the same split shows up again, both on a single task and in a model trained on all 18 tasks of DeepMind Control. Two caveats:</p>
       <ul>
         <li>To remember what a single frame cannot show, such as how fast something is moving, the model needs gradients through time. AIR's usual one-step gradient does not provide them.</li>
-        <li>One shared network does as well as two separate ones on a single task, but falls behind once the model has to learn all 18, and the cost comes from sharing the weights rather than from depth or size.</li>
+        <li>One shared network does as well as two separate ones on a single task, but falls behind once the model has to learn all 18, and the cost appears to come from sharing the weights rather than from depth or size.</li>
       </ul>
     </div>
 
     <h2>Setup</h2>
-    <p><strong>A world model predicts what an agent will see next, so that the agent can practise inside the model instead of in the real environment.</strong> It takes what the agent has seen so far and the action it takes, and predicts the next frame. <a href="https://danijar.com/project/dreamer4/" target="_blank" rel="noopener noreferrer">Dreamer&nbsp;4</a> is a recent example, and it has two parts. A tokenizer compresses each video frame into a handful of latent tokens. A large dynamics Transformer then predicts the next frame's tokens from the actions and the tokens of earlier frames, attending over all the frames that came before.</p>
+    <p><strong>A world model predicts what an agent will see next, so that the agent can practice inside the model instead of in the real environment.</strong> It takes what the agent has seen so far and the action it takes, and predicts the next frame. <a href="https://danijar.com/project/dreamer4/" target="_blank" rel="noopener noreferrer">Dreamer&nbsp;4</a> is a recent example, and it has two parts. A tokenizer compresses each video frame into a handful of latent tokens. A large dynamics Transformer then predicts the next frame's tokens from the actions and the tokens of earlier frames, attending over all the frames that came before.</p>
     <figure class="d4">
       <div class="d4-panels">
-        <div><img src="../../assets/img/posts/airwm/d4_tok.svg" width="224" height="199" alt="Dreamer 4's causal tokenizer: a block-causal encoder turns masked image patches into latent tokens z, and a block-causal decoder turns them back into frames."><div class="d4-sub">(a) Tokenizer: we keep it, frozen</div></div>
+        <div><img src="../../assets/img/posts/airwm/d4_tok.svg" width="224" height="199" alt="Dreamer 4's causal tokenizer: a block-causal encoder turns masked image patches into latent tokens z, and a block-causal decoder turns them back into frames."><div class="d4-sub">(a) Tokenizer: we use a pretrained one, frozen</div></div>
         <div><img src="../../assets/img/posts/airwm/d4_dyn.svg" width="254" height="199" alt="Dreamer 4's interactive dynamics: a block-causal Transformer with one causal time layer and three space layers per block reads actions, noise levels and step sizes, and noised latents, and predicts clean latents."><div class="d4-sub">(b) Dynamics: we replace it with AIR</div></div>
       </div>
       <figcaption>Dreamer&nbsp;4's world model, from <a href="https://danijar.com/project/dreamer4/" target="_blank" rel="noopener noreferrer">Hafner et al. (2025)</a>, shown on Minecraft. In (b), <i>a</i> is the action and <i>t</i>, <i>d</i> control how much noise is added to the tokens during training (its shortcut-forcing objective); our model does not use this part and predicts the next tokens directly.</figcaption>
     </figure>
-    <p><strong>We replace Dreamer&nbsp;4's Transformer with AIR, which updates two latent states with one network and lets only one of the two updates see the input.</strong> The tokenizer stays, frozen. The two states are <i>z</i><sub>L</sub> and <i>z</i><sub>H</sub>, and the input goes only into the update of <i>z</i><sub>L</sub>. On puzzles the input is the same at every step. A world model is harder in three ways: a new frame arrives at every step; some things, like velocity, cannot be read off any single frame and have to be remembered; and when the model imagines the future, there are no frames at all.</p>
+    <p><strong>We replace Dreamer&nbsp;4's Transformer with AIR, which updates two latent states with one network and lets only one of the two updates see the input.</strong> For the tokenizer we use a pretrained one from <a href="https://huggingface.co/nicklashansen/dreamer4" target="_blank" rel="noopener noreferrer">Nicklas Hansen's open-source Dreamer&nbsp;4 implementation</a>, frozen. The two states are <i>z</i><sub>L</sub> and <i>z</i><sub>H</sub>, and the input goes only into the update of <i>z</i><sub>L</sub>. On puzzles the input is the same at every step. A world model is harder in three ways: a new frame arrives at every step; some things, like velocity, cannot be read off any single frame and have to be remembered; and when the model imagines the future, there are no frames at all.</p>
     <p><strong>The model has no attention over past frames, so its two states are its only memory.</strong> At each time step, we combine the current frame's latent tokens, the action and a task token into one input <i>x</i><sub><i>t</i></sub>. The network then runs six updates (L, L, H, L, L, H), we read the prediction of the next frame from <i>z</i><sub>H</sub>, and both states are handed to the next time step. We compare three ways of wiring a step:</p>
 
     <div class="variants" id="variants"></div>
@@ -100,7 +99,7 @@
       <div class="plot" id="fig-ratio"></div>
       <figcaption>Readout ratio: the prediction head's error when it reads from <i>z</i><sub>L</sub>, divided by its error when it reads from <i>z</i><sub>H</sub>, on the last frame the model sees, after the step's final update. 1 means the two states are interchangeable. Each dot is one seed; the number on the right is the mean. Log scale.</figcaption>
     </figure>
-    <p><strong>The two states split the work whenever only one update sees the frame, whether or not they share weights.</strong> In air, reading the prediction from <i>z</i><sub>L</sub> is hundreds of times worse than from <i>z</i><sub>H</sub> with BPTT, and still more than 15 times worse with the one-step gradient. In sym, where the frame goes into both updates, the ratio stays close to 1 in every seed. The two-network models split just like air.</p>
+    <p><strong>The two states split the work whenever only one update sees the frame, whether or not they share weights.</strong> In air, reading the prediction from <i>z</i><sub>L</sub> is hundreds of times worse than from <i>z</i><sub>H</sub> with BPTT, and still at least 15 times worse with the one-step gradient. In sym, where the frame goes into both updates, the ratio stays at about 1 with the one-step gradient and about 2 with BPTT, in every seed. The two-network models split just like air.</p>
     <p><strong>This does not mean <i>z</i><sub>L</sub> is empty: it holds information in a form the prediction head cannot use.</strong> A linear probe can still read the simulator state from it quite well, much like the scratchpad role <i>z</i><sub>L</sub> played on puzzles.</p>
     <p><strong>The same split holds on every one of the 18 tasks of DeepMind Control.</strong> Cup-catch is a single task, so we also trained one model on all 18 tasks of the DMC Visual Control suite, with about 18 times as much data:</p>
     <figure class="chart">
@@ -118,10 +117,14 @@
       <div class="plot" id="fig-r2"></div>
       <figcaption>R&sup2; of a linear (ridge) probe that predicts the simulator state (positions and velocities) from <i>z</i><sub>H</sub>, averaged over its tokens, at every 4th imagined frame. The probe is fit on half of the episodes and scored on the other half. 1 is perfect; 0 is no better than always guessing the average state. Each dot is one seed. Dashed line: the same probe applied to the true frame at that step.</figcaption>
     </figure>
-    <p><strong>Backpropagation through time is what teaches the model to remember.</strong> With the one-step gradient, every model stays fairly close to the dashed line: <i>z</i><sub>H</sub> knows only a little more than the current frame shows. With BPTT, air reaches an R&sup2; of 0.81, and its error on the first predicted frame drops about 9 times. The 18-task models follow the same pattern: air trained with BPTT reaches 0.50, while the one-step models reach 0.38&ndash;0.39 and the frame alone 0.40.</p>
+    <p><strong>In our runs, only backpropagation through time taught the model to remember.</strong> With the one-step gradient, every model stays fairly close to the dashed line: <i>z</i><sub>H</sub> knows only a little more than the current frame shows. With BPTT, air reaches an R&sup2; of 0.81, and its error on the first predicted frame drops about 9 times. The 18-task models follow the same pattern: air trained with BPTT reaches 0.50, while the one-step models reach 0.38&ndash;0.39 and the frame alone 0.40.</p>
 
     <h2>3. Accuracy</h2>
-    <p><strong>To measure accuracy, each model sees 8 frames and then imagines the next 24 on its own.</strong> The table shows the error over those 24 frames. All models here are trained with BPTT.</p>
+    <p><strong>To measure accuracy, each model sees 8 frames and then imagines the next 24 on its own.</strong> The figure shows what the imagined frames look like, and the table gives the error over those 24 frames. All models here are trained with BPTT.</p>
+    <figure>
+      <img src="../../assets/img/posts/airwm/rollouts.jpg" width="768" height="591" alt="Three pairs of frame rows: a ball-in-cup robot, a cart with a pole, and a legged robot. In each pair the true frames are on top and air's imagined frames below; the imagined frames match closely at first and blur or drift later, most for the legged robot.">
+      <figcaption>What air imagines. In each pair, the top row shows the true frames (as reconstructed by the tokenizer) and the bottom row what air predicts in its own state after seeing 8 frames: every 3rd imagined frame, from the 1st (left) to the 22nd (right). Top: the cup-catch model. Middle and bottom: the 18-task model on cartpole and on a legged robot. Both are trained with BPTT (seed 0). The predictions stay sharp at first; over longer horizons, fast-moving parts blur and drift.</figcaption>
+    </figure>
     <div class="table-wrap">
       <table>
         <thead>
@@ -140,7 +143,7 @@
     <p class="table-note">Mean squared error between the predicted and the true latent tokens of each frame, averaged over the 24 imagined frames and held-out test windows; lower is better. While imagining, the models get the actions but no frames. &ldquo;Repeat the last frame&rdquo; predicts that nothing moves. Mean over 3 seeds; * one seed so far.</p>
     <p><strong>Sending the frame only into L makes the model more accurate than sending it into both updates.</strong> air's error is 30% lower than sym's on cup-catch and 26% lower on the 18 tasks.</p>
     <p><strong>Against two separate networks, one shared network holds up on one task but not on 18.</strong> On cup-catch, air does about as well as hrm_half, two half-size networks with the same number of parameters (0.0201 against 0.0211). On the 18 tasks, hrm_half is 23% more accurate, and on 17 of the 18 tasks even its worst seed beats air's best.</p>
-    <p><strong>The cost comes from sharing the weights, not from depth or size.</strong> hrm_half differs from air in two ways: its two networks have separate weights, and each is half as deep, so one step takes half the compute. To tell these apart, we trained air with a 2-layer block, which matches hrm_half in depth and compute and has half its parameters. Its error, 0.0495, is about the same as the 4-layer air's and still 25% above hrm_half's. Size does not explain the gap either, since the 4-layer air already has as many parameters as hrm_half.</p>
+    <p><strong>In our setup, the cost points to sharing the weights, not to depth or size.</strong> hrm_half differs from air in two ways: its two networks have separate weights, and each is half as deep, so one step takes half the compute. To tell these apart, we trained air with a 2-layer block, which matches hrm_half in depth and compute and has half its parameters. Its error, 0.0495, is about the same as the 4-layer air's and still 25% above hrm_half's. Size does not explain the gap either, since the 4-layer air already has as many parameters as hrm_half.</p>
     <p><strong>Within a shared network, a sharper split does not buy accuracy.</strong> The 2-layer air splits the work less sharply than the 4-layer one (a readout ratio of 51 instead of 90), yet it is just as accurate.</p>
     <p><strong>We also compare against a causal Transformer like the one we replaced, which has to feed its own predictions back in to imagine.</strong> It follows Dreamer&nbsp;4's dynamics model without its noise objective, with twice air's parameters and the same data and number of steps. Since it has no state of its own to imagine in, each prediction goes back in as the next frame. To compare fairly, we run our models the same way here.</p>
     <div class="table-wrap">
@@ -171,8 +174,8 @@
     <ul>
       <li><strong>Where the input enters decides the roles.</strong> The split we saw on puzzles survives continuous dynamics, changing frames and imagination, and it does not need separate weights.</li>
       <li><strong>How the gradient flows decides what gets remembered.</strong> <a href="https://arxiv.org/abs/2506.21734" target="_blank" rel="noopener noreferrer">HRM</a>, <a href="https://arxiv.org/abs/2510.04871" target="_blank" rel="noopener noreferrer">TRM</a> and <a href="https://arxiv.org/abs/2605.17811" target="_blank" rel="noopener noreferrer">AIR</a> all cut the gradient between supervision steps: HRM and AIR keep only a one-step gradient within a step, and TRM backpropagates through its last full recursion. That is cheap, and it works when the input stays the same. A world model has to carry information from one step to the next, so its gradient has to cross steps too. Here that took full backpropagation through time, at about twice the training time and three times the GPU memory.</li>
-      <li><strong>Sharing one network has a cost when there is a lot to learn.</strong> On the 18 tasks, a shared network has a 25&ndash;30% higher error than two separate ones, whether it is as deep as them or twice as deep. The cost comes from the shared weights, not from depth or size.</li>
-      <li><strong>A recurrent state pays off at long horizons.</strong> A Transformer that attends over all past frames predicts the next few frames better. The recurrent models drift less over 24 frames, most of all when they imagine in their own state.</li>
+      <li><strong>Sharing one network has a cost when there is a lot to learn.</strong> On the 18 tasks, a shared network has a 25&ndash;30% higher error than two separate ones, whether it is as deep as them or twice as deep. In our setup, with AIR's default hyperparameters for every model, the cost points to the shared weights rather than to depth or size.</li>
+      <li><strong>A recurrent state pays off at long horizons.</strong> A Transformer that attends over all past frames predicts the next few frames as well or better. The recurrent models drift less over 24 frames, most of all when they imagine in their own state.</li>
     </ul>
 
     <h2>Next steps</h2>
@@ -181,6 +184,9 @@
       <li>Find out how far back the gradient has to reach, by truncating backpropagation through time at 4, 8 and 16 steps instead of 32.</li>
       <li>Put the model to use the way world models are meant to be used: for planning, or for training a policy inside it.</li>
     </ul>
+
+    <h2>Acknowledgments</h2>
+    <p>Experiments ran on the RANGE cluster of the Center for Research Computing at Rice University, with compute provided through <a href="https://akyrillidis.github.io/about/" target="_blank" rel="noopener noreferrer">Prof. Anastasios Kyrillidis</a>'s group.</p>
   </main>
 
   <footer>
