@@ -82,7 +82,7 @@
       <p><strong>TL;DR:</strong> In <a href="../air/">AIR</a>, one network updates two latent states, and only one of the two updates sees the input. On puzzles, that alone was enough for the two states to take on different jobs. Here we use AIR as a world model that predicts video of simulated robots one step at a time, and the same split shows up again, both on a single task and in a model trained on all 18 tasks of DeepMind Control. Two caveats:</p>
       <ul>
         <li>To remember what a single frame cannot show, such as how fast something is moving, the model needs gradients through time. AIR's usual one-step gradient does not provide them.</li>
-        <li>One shared network is as accurate as two separate networks on a single task but less accurate on all 18 tasks, and the gap appears to stem from weight sharing rather than from depth or model size.</li>
+        <li>On a single task, one shared network is as accurate as two separate half-size networks; on all 18 tasks it is less accurate, and neither weight sharing nor depth alone explains the gap.</li>
       </ul>
     </div>
 
@@ -143,16 +143,16 @@
           <tr class="strong"><td>air</td><td class="num">0.0201</td><td class="num">0.0517</td></tr>
           <tr><td>sym</td><td class="num">0.0289</td><td class="num">0.0699</td></tr>
           <tr><td>hrm_half (two networks, same parameters)</td><td class="num">0.0211</td><td class="num">0.0396</td></tr>
-          <tr><td>hrm (two networks, 2&times; parameters)</td><td class="num">0.0303</td><td class="num">0.0524*</td></tr>
+          <tr><td>hrm (two networks, 2&times; parameters)</td><td class="num">0.0303&dagger;</td><td class="num">0.0542</td></tr>
           <tr><td>air, 2-layer block (half the parameters)</td><td class="num">&ndash;</td><td class="num">0.0495</td></tr>
           <tr><td>repeat the last frame</td><td class="num">0.236</td><td class="num">0.165</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="table-note">Mean squared error between the predicted and the true latent tokens of each frame, averaged over the 24 imagined frames and held-out test windows; lower is better. While imagining, the models get the actions but no frames. &ldquo;Repeat the last frame&rdquo; predicts that nothing moves. Mean over 3 seeds; * two seeds so far.</p>
+    <p class="table-note">Mean squared error between the predicted and the true latent tokens of each frame, averaged over the 24 imagined frames and held-out test windows; lower is better. While imagining, the models get the actions but no frames. &ldquo;Repeat the last frame&rdquo; predicts that nothing moves. Mean over 3 seeds; &dagger; two seeds (the third diverged at the start of training).</p>
     <p><strong>Sending the frame only into L makes the model more accurate than sending it into both updates.</strong> air's error is 30% lower than sym's on cup-catch and 26% lower on the 18 tasks.</p>
-    <p><strong>One shared network matches two separate networks on a single task, but not on 18 tasks.</strong> On cup-catch, air does about as well as hrm_half, two half-size networks with the same number of parameters (0.0201 against 0.0211). On the 18 tasks, hrm_half is 23% more accurate, and on 17 of the 18 tasks even its worst seed is more accurate than air's best.</p>
-    <p><strong>In our setup, the accuracy gap appears to be due to weight sharing rather than to depth or model size.</strong> hrm_half differs from air in two ways: its two networks have separate weights, and each is half as deep, so one step takes half the compute. To tell these apart, we trained air with a 2-layer block, which matches hrm_half in depth and compute and has half its parameters. Its error, 0.0495, is about the same as the 4-layer air's and still 25% above hrm_half's. Size does not explain the gap either, since the 4-layer air already has as many parameters as hrm_half.</p>
+    <p><strong>One shared network matches two half-size networks (hrm_half) on a single task, but not on 18 tasks.</strong> On cup-catch, air does about as well as hrm_half, which has the same number of parameters (0.0201 against 0.0211). On the 18 tasks, hrm_half is 23% more accurate, and on 17 of the 18 tasks even its worst seed is more accurate than air's best.</p>
+    <p><strong>Neither weight sharing nor depth alone explains this gap.</strong> hrm_half differs from air in two ways: its two networks have separate weights, and each is half as deep. A 2-layer air, which matches hrm_half in depth and compute, reaches 0.0495, still 25% above hrm_half. Conversely, hrm, which has separate weights at air's depth, reaches 0.0542, no better than air (its three seeds range from 0.046 to 0.059). In our runs, separate weights helped only when each network was shallow.</p>
     <p><strong>Within a shared network, sharper specialization does not improve accuracy.</strong> The 2-layer air specializes less than the 4-layer one (a readout ratio of 51 instead of 90), yet it is equally accurate.</p>
     <p><strong>We also compare against a causal Transformer like the one we replaced, which has to feed its own predictions back in to imagine.</strong> It follows Dreamer&nbsp;4's dynamics model without its noise objective, with twice air's parameters and the same data and number of steps. Since it has no state of its own to imagine in, each prediction goes back in as the next frame. To compare fairly, we run our models the same way here.</p>
     <figure class="chart">
@@ -172,13 +172,13 @@
     <ul>
       <li><strong>Where the input enters decides the roles.</strong> The split we saw on puzzles survives continuous dynamics, changing frames and imagination, and it does not need separate weights.</li>
       <li><strong>How the gradient flows decides what gets remembered.</strong> <a href="https://arxiv.org/abs/2506.21734" target="_blank" rel="noopener noreferrer">HRM</a>, <a href="https://arxiv.org/abs/2510.04871" target="_blank" rel="noopener noreferrer">TRM</a> and <a href="https://arxiv.org/abs/2605.17811" target="_blank" rel="noopener noreferrer">AIR</a> all cut the gradient between supervision steps: HRM and AIR keep only a one-step gradient within a step, and TRM backpropagates through its last full recursion. This keeps training inexpensive and is sufficient when the input does not change. A world model has to carry information from one step to the next, so its gradient has to cross steps too. Here that took full backpropagation through time, at about twice the training time and three times the GPU memory.</li>
-      <li><strong>Weight sharing reduces accuracy when there is a lot to learn.</strong> On the 18 tasks, a shared network has a 25&ndash;30% higher error than two separate networks, whether it has the same depth or twice the depth. With AIR's default hyperparameters for every model, the gap appears to be due to weight sharing rather than to depth or model size.</li>
+      <li><strong>On a large, diverse task set, separate shallow networks are the most accurate.</strong> On the 18 tasks, hrm_half's error is 20&ndash;23% lower than that of one shared network, whether the shared network has its depth or twice it. Separate networks at full depth (hrm) do not help, so the advantage appears to come from combining separate weights with shallow networks.</li>
       <li><strong>A recurrent state is most useful at long horizons.</strong> A Transformer that attends over all past frames predicts the next several frames more accurately, whereas the recurrent models accumulate less error over 24 frames, especially when they imagine in their own state.</li>
     </ul>
 
     <h2>Next steps</h2>
     <ul>
-      <li>Test whether a lightweight signal that distinguishes the two updates, such as separate normalization layers or a learned role embedding, allows a single shared network to close the gap to hrm_half.</li>
+      <li>Find out why separate weights help only when each network is shallow, by varying the depth of hrm's two networks.</li>
       <li>Find out how far back the gradient has to reach, by truncating backpropagation through time at 4, 8 and 16 steps instead of 32.</li>
       <li>Put the model to use the way world models are meant to be used: for planning, or for training a policy inside it.</li>
     </ul>
