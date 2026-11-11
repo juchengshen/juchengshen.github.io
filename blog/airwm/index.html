@@ -32,6 +32,15 @@
     .chart-key span { display: inline-flex; align-items: center; gap: 6px; }
     .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
     .plot svg { display: block; width: 100%; font-family: inherit; }
+    .ln { display: inline-block; width: 16px; height: 0; border-top: 2px solid; }
+    .ln.dash { border-top-style: dashed; }
+    .lp { position: relative; }
+    .lp-tip { position: absolute; display: none; pointer-events: none; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 0.7rem; line-height: 1.5; color: var(--text); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); white-space: nowrap; }
+    .lp-tip .ln { margin-right: 6px; vertical-align: middle; }
+    .lp-panels { display: flex; gap: 20px; }
+    .lp-panel { flex: 1 1 0; min-width: 0; }
+    .lp-sub { font-size: 0.75rem; font-weight: 600; color: var(--text-light); margin: 6px 0 0; }
+    @media (max-width: 600px) { .lp-panels { flex-direction: column; gap: 6px; } }
     .variants {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -73,7 +82,7 @@
       <p><strong>TL;DR:</strong> In <a href="../air/">AIR</a>, one network updates two latent states, and only one of the two updates sees the input. On puzzles, that alone was enough for the two states to take on different jobs. Here we use AIR as a world model that predicts video of simulated robots one step at a time, and the same split shows up again, both on a single task and in a model trained on all 18 tasks of DeepMind Control. Two caveats:</p>
       <ul>
         <li>To remember what a single frame cannot show, such as how fast something is moving, the model needs gradients through time. AIR's usual one-step gradient does not provide them.</li>
-        <li>One shared network does as well as two separate ones on a single task, but falls behind once the model has to learn all 18, and the cost appears to come from sharing the weights rather than from depth or size.</li>
+        <li>One shared network is as accurate as two separate networks on a single task but less accurate on all 18 tasks, and the gap appears to stem from weight sharing rather than from depth or model size.</li>
       </ul>
     </div>
 
@@ -111,13 +120,13 @@
 
     <h2>2. Memory needs gradients through time</h2>
     <p><strong>AIR's one-step gradient never tells the model what to carry forward from earlier steps.</strong> With it, the loss at one time step never sends a learning signal back to earlier steps. On puzzles that is fine, because the puzzle is shown again at every step and nothing has to be carried over. In a world model it matters: a single frame shows where things are but not how fast they move, so the model has to carry that forward itself.</p>
-    <p><strong>To measure memory, we test how much of the true simulator state <i>z</i><sub>H</sub> holds while the model imagines.</strong> We fit a linear probe that predicts the positions and velocities from <i>z</i><sub>H</sub>, and test it on episodes it was not fit on. If <i>z</i><sub>H</sub> only knew what the current frame shows, it would score about the same as this probe applied to the frame itself, marked by the dashed line.</p>
+    <p><strong>To measure memory, we test how well <i>z</i><sub>H</sub> predicts the true physical state, positions and velocities, while the model imagines.</strong> We fit a linear probe from <i>z</i><sub>H</sub> to the simulator's state on some episodes and score it on others with R&sup2; (1 is perfect, 0 is guessing the average). As a baseline, the dashed line applies the same probe to a single true frame. A single frame shows where things are but not how fast they move, so it scores only about 0.43. A <i>z</i><sub>H</sub> that scores well above this line must be carrying velocity forward from earlier steps, even though, while imagining, it never sees the frame at all.</p>
     <figure class="chart">
       <div class="chart-title">How much of the true state <i>z</i><sub>H</sub> holds (R&sup2;), cup-catch</div>
       <div class="plot" id="fig-r2"></div>
-      <figcaption>R&sup2; of a linear (ridge) probe that predicts the simulator state (positions and velocities) from <i>z</i><sub>H</sub>, averaged over its tokens, at every 4th imagined frame. The probe is fit on half of the episodes and scored on the other half. 1 is perfect; 0 is no better than always guessing the average state. Each dot is one seed. Dashed line: the same probe applied to the true frame at that step.</figcaption>
+      <figcaption>R&sup2; of a linear (ridge) probe that predicts the simulator state (positions and velocities) from <i>z</i><sub>H</sub>, averaged over its tokens, at every 4th imagined frame. The probe is fit on half of the episodes and scored on the other half. 1 is perfect; 0 is no better than always guessing the average state. Each dot is one seed. Dashed line: the same probe given the true frame at that step instead of <i>z</i><sub>H</sub>; one frame shows positions but not velocities.</figcaption>
     </figure>
-    <p><strong>In our runs, only backpropagation through time taught the model to remember.</strong> With the one-step gradient, every model stays fairly close to the dashed line: <i>z</i><sub>H</sub> knows only a little more than the current frame shows. With BPTT, air reaches an R&sup2; of 0.81, and its error on the first predicted frame drops about 9 times. The 18-task models follow the same pattern: air trained with BPTT reaches 0.50, while the one-step models reach 0.38&ndash;0.39 and the frame alone 0.40.</p>
+    <p><strong>In our runs, only backpropagation through time taught the model to remember.</strong> With the one-step gradient, every model stays fairly close to the dashed line: <i>z</i><sub>H</sub> knows only a little more than a single frame shows. With BPTT, air reaches an R&sup2; of 0.81, and its error on the first predicted frame drops about 9 times. The 18-task models follow the same pattern: air trained with BPTT reaches 0.50, while the one-step models reach 0.38&ndash;0.39 and the frame alone 0.40.</p>
 
     <h2>3. Accuracy</h2>
     <p><strong>To measure accuracy, each model sees 8 frames and then imagines the next 24 on its own.</strong> The figure shows what the imagined frames look like, and the table gives the error over those 24 frames. All models here are trained with BPTT.</p>
@@ -134,53 +143,42 @@
           <tr class="strong"><td>air</td><td class="num">0.0201</td><td class="num">0.0517</td></tr>
           <tr><td>sym</td><td class="num">0.0289</td><td class="num">0.0699</td></tr>
           <tr><td>hrm_half (two networks, same parameters)</td><td class="num">0.0211</td><td class="num">0.0396</td></tr>
-          <tr><td>hrm (two networks, 2&times; parameters)</td><td class="num">0.0303</td><td class="num">0.0457*</td></tr>
+          <tr><td>hrm (two networks, 2&times; parameters)</td><td class="num">0.0303</td><td class="num">0.0524*</td></tr>
           <tr><td>air, 2-layer block (half the parameters)</td><td class="num">&ndash;</td><td class="num">0.0495</td></tr>
           <tr><td>repeat the last frame</td><td class="num">0.236</td><td class="num">0.165</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="table-note">Mean squared error between the predicted and the true latent tokens of each frame, averaged over the 24 imagined frames and held-out test windows; lower is better. While imagining, the models get the actions but no frames. &ldquo;Repeat the last frame&rdquo; predicts that nothing moves. Mean over 3 seeds; * one seed so far.</p>
+    <p class="table-note">Mean squared error between the predicted and the true latent tokens of each frame, averaged over the 24 imagined frames and held-out test windows; lower is better. While imagining, the models get the actions but no frames. &ldquo;Repeat the last frame&rdquo; predicts that nothing moves. Mean over 3 seeds; * two seeds so far.</p>
     <p><strong>Sending the frame only into L makes the model more accurate than sending it into both updates.</strong> air's error is 30% lower than sym's on cup-catch and 26% lower on the 18 tasks.</p>
-    <p><strong>Against two separate networks, one shared network holds up on one task but not on 18.</strong> On cup-catch, air does about as well as hrm_half, two half-size networks with the same number of parameters (0.0201 against 0.0211). On the 18 tasks, hrm_half is 23% more accurate, and on 17 of the 18 tasks even its worst seed beats air's best.</p>
-    <p><strong>In our setup, the cost points to sharing the weights, not to depth or size.</strong> hrm_half differs from air in two ways: its two networks have separate weights, and each is half as deep, so one step takes half the compute. To tell these apart, we trained air with a 2-layer block, which matches hrm_half in depth and compute and has half its parameters. Its error, 0.0495, is about the same as the 4-layer air's and still 25% above hrm_half's. Size does not explain the gap either, since the 4-layer air already has as many parameters as hrm_half.</p>
-    <p><strong>Within a shared network, a sharper split does not buy accuracy.</strong> The 2-layer air splits the work less sharply than the 4-layer one (a readout ratio of 51 instead of 90), yet it is just as accurate.</p>
+    <p><strong>One shared network matches two separate networks on a single task, but not on 18 tasks.</strong> On cup-catch, air does about as well as hrm_half, two half-size networks with the same number of parameters (0.0201 against 0.0211). On the 18 tasks, hrm_half is 23% more accurate, and on 17 of the 18 tasks even its worst seed is more accurate than air's best.</p>
+    <p><strong>In our setup, the accuracy gap appears to be due to weight sharing rather than to depth or model size.</strong> hrm_half differs from air in two ways: its two networks have separate weights, and each is half as deep, so one step takes half the compute. To tell these apart, we trained air with a 2-layer block, which matches hrm_half in depth and compute and has half its parameters. Its error, 0.0495, is about the same as the 4-layer air's and still 25% above hrm_half's. Size does not explain the gap either, since the 4-layer air already has as many parameters as hrm_half.</p>
+    <p><strong>Within a shared network, sharper specialization does not improve accuracy.</strong> The 2-layer air specializes less than the 4-layer one (a readout ratio of 51 instead of 90), yet it is equally accurate.</p>
     <p><strong>We also compare against a causal Transformer like the one we replaced, which has to feed its own predictions back in to imagine.</strong> It follows Dreamer&nbsp;4's dynamics model without its noise objective, with twice air's parameters and the same data and number of steps. Since it has no state of its own to imagine in, each prediction goes back in as the next frame. To compare fairly, we run our models the same way here.</p>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Fed back</th><th class="num">1st frame</th><th class="num">24th frame</th><th class="num">all 24</th></tr>
-        </thead>
-        <tbody>
-          <tr class="group"><td colspan="4">cup-catch</td></tr>
-          <tr class="strong"><td>air</td><td class="num">0.0036</td><td class="num">0.0471</td><td class="num">0.0331</td></tr>
-          <tr><td>hrm_half</td><td class="num">0.0038</td><td class="num">0.0486</td><td class="num">0.0355</td></tr>
-          <tr><td>sym</td><td class="num">0.0049</td><td class="num">0.0543</td><td class="num">0.0423</td></tr>
-          <tr><td>Transformer (2&times; parameters)</td><td class="num">0.0033</td><td class="num">0.0677</td><td class="num">0.0394</td></tr>
-          <tr class="group"><td colspan="4">18 tasks</td></tr>
-          <tr class="strong"><td>air</td><td class="num">0.0084</td><td class="num">0.1447</td><td class="num">0.0909</td></tr>
-          <tr><td>hrm_half</td><td class="num">0.0067</td><td class="num">0.1291</td><td class="num">0.0774</td></tr>
-          <tr><td>sym</td><td class="num">0.0086</td><td class="num">0.1583</td><td class="num">0.0998</td></tr>
-          <tr><td>Transformer (2&times; parameters)*</td><td class="num">0.0023</td><td class="num">0.1808</td><td class="num">0.0874</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="table-note">Fed back: each predicted frame is passed back in as the next input, which is how a Transformer has to imagine. Same error as above. Mean over 3 seeds; * one seed. The recurrent models are trained with BPTT.</p>
-    <p><strong>On cup-catch, the Transformer matches air on the first frame but falls behind the further it imagines.</strong> By the 24th frame its error is 44% higher than air's, and every Transformer seed is worse than every air seed.</p>
-    <p><strong>On the 18 tasks, the Transformer is better at short horizons and worse at long ones.</strong> Its first-frame error is less than a third of air's, and it stays ahead for the first 14 frames; by the 24th frame its error is 25% higher than air's. Over all 24 frames it ends up about the same as air and 13% worse than hrm_half. It also depends much more on the task: it is about twice as good as air on cartpole and three times as good on reacher, but three times worse on cheetah and four times worse on pendulum. The 18-task Transformer is a single seed (its three cup-catch seeds are within about 5% of each other), and we did not tune it.</p>
-    <p><strong>Imagining in its own state, instead of re-reading its own predictions, is part of what the recurrent state buys.</strong> Fed back, air's error is 0.0331 on cup-catch and 0.0909 on the 18 tasks; in its own state it is 0.0201 and 0.0517, and on the 18 tasks it then beats the Transformer from the 10th frame on.</p>
+    <figure class="chart">
+      <div class="chart-title">Error at each imagined frame, fed back</div>
+      <div class="chart-key"><span><i class="ln" style="color:#4f7fd6"></i>air, fed back</span><span><i class="ln dash" style="color:#4f7fd6"></i>air, own state</span><span><i class="ln" style="color:#1baf7a"></i>hrm_half</span><span><i class="ln" style="color:#807c75"></i>sym</span><span><i class="ln" style="color:#eb6834"></i>Transformer</span></div>
+      <div class="lp-panels">
+        <div class="lp-panel"><div class="lp-sub">cup-catch</div><div class="plot lp" id="fig-horizon-cc"></div></div>
+        <div class="lp-panel"><div class="lp-sub">18 tasks</div><div class="plot lp" id="fig-horizon"></div></div>
+      </div>
+      <figcaption>Mean squared error of the latent tokens at each of the 24 imagined frames, mean over 3 seeds (18-task Transformer: one seed). Solid lines: each prediction is fed back as the next input. Dashed: air imagines in its own state, for reference. The two panels have different scales. Hover or tap for the values. The recurrent models are trained with BPTT.</figcaption>
+    </figure>
+    <p><strong>On cup-catch, the Transformer is better for the first 11 frames and worse after that.</strong> By the 24th frame its error is 44% higher than air's, and over all 24 frames it is 19% higher, with every Transformer seed worse than every air seed.</p>
+    <p><strong>On the 18 tasks, the pattern is the same, with a larger early advantage for the Transformer.</strong> Its first-frame error is less than a third of air's and it stays ahead for 14 frames, but by the 24th frame its error is 25% higher. Over all 24 frames it ends up about the same as air and 13% worse than hrm_half. It also depends much more on the task: it is about twice as good as air on cartpole and three times as good on reacher, but three times worse on cheetah and four times worse on pendulum. The 18-task Transformer is a single seed (its three cup-catch seeds are within about 5% of each other), and we did not tune it.</p>
+    <p><strong>Imagining in its own latent state, rather than from its own predicted frames, further reduces air's error.</strong> Fed back, air's error is 0.0331 on cup-catch and 0.0909 on the 18 tasks; in its own state it is 0.0201 and 0.0517, and it outperforms the Transformer from the 9th frame on cup-catch and from the 10th on the 18 tasks.</p>
 
     <h2>What it means</h2>
     <ul>
       <li><strong>Where the input enters decides the roles.</strong> The split we saw on puzzles survives continuous dynamics, changing frames and imagination, and it does not need separate weights.</li>
-      <li><strong>How the gradient flows decides what gets remembered.</strong> <a href="https://arxiv.org/abs/2506.21734" target="_blank" rel="noopener noreferrer">HRM</a>, <a href="https://arxiv.org/abs/2510.04871" target="_blank" rel="noopener noreferrer">TRM</a> and <a href="https://arxiv.org/abs/2605.17811" target="_blank" rel="noopener noreferrer">AIR</a> all cut the gradient between supervision steps: HRM and AIR keep only a one-step gradient within a step, and TRM backpropagates through its last full recursion. That is cheap, and it works when the input stays the same. A world model has to carry information from one step to the next, so its gradient has to cross steps too. Here that took full backpropagation through time, at about twice the training time and three times the GPU memory.</li>
-      <li><strong>Sharing one network has a cost when there is a lot to learn.</strong> On the 18 tasks, a shared network has a 25&ndash;30% higher error than two separate ones, whether it is as deep as them or twice as deep. In our setup, with AIR's default hyperparameters for every model, the cost points to the shared weights rather than to depth or size.</li>
-      <li><strong>A recurrent state pays off at long horizons.</strong> A Transformer that attends over all past frames predicts the next few frames as well or better. The recurrent models drift less over 24 frames, most of all when they imagine in their own state.</li>
+      <li><strong>How the gradient flows decides what gets remembered.</strong> <a href="https://arxiv.org/abs/2506.21734" target="_blank" rel="noopener noreferrer">HRM</a>, <a href="https://arxiv.org/abs/2510.04871" target="_blank" rel="noopener noreferrer">TRM</a> and <a href="https://arxiv.org/abs/2605.17811" target="_blank" rel="noopener noreferrer">AIR</a> all cut the gradient between supervision steps: HRM and AIR keep only a one-step gradient within a step, and TRM backpropagates through its last full recursion. This keeps training inexpensive and is sufficient when the input does not change. A world model has to carry information from one step to the next, so its gradient has to cross steps too. Here that took full backpropagation through time, at about twice the training time and three times the GPU memory.</li>
+      <li><strong>Weight sharing reduces accuracy when there is a lot to learn.</strong> On the 18 tasks, a shared network has a 25&ndash;30% higher error than two separate networks, whether it has the same depth or twice the depth. With AIR's default hyperparameters for every model, the gap appears to be due to weight sharing rather than to depth or model size.</li>
+      <li><strong>A recurrent state is most useful at long horizons.</strong> A Transformer that attends over all past frames predicts the next several frames more accurately, whereas the recurrent models accumulate less error over 24 frames, especially when they imagine in their own state.</li>
     </ul>
 
     <h2>Next steps</h2>
     <ul>
-      <li>Test whether a cheap signal that tells the two updates apart, such as separate normalization layers or a learned role embedding, lets one shared network close the gap to hrm_half.</li>
+      <li>Test whether a lightweight signal that distinguishes the two updates, such as separate normalization layers or a learned role embedding, allows a single shared network to close the gap to hrm_half.</li>
       <li>Find out how far back the gradient has to reach, by truncating backpropagation through time at 4, 8 and 16 steps instead of 32.</li>
       <li>Put the model to use the way world models are meant to be used: for planning, or for training a policy inside it.</li>
     </ul>
@@ -322,10 +320,10 @@
 
     dotplot("fig-r2", {
       domain: [0.35, 0.95], ticks: [0.4, 0.6, 0.8], tick: function (k) { return k.toFixed(1); }, fmt: function (v) { return v.toFixed(2); },
-      labelW: 78, ref: 0.417,
+      labelW: 78, ref: 0.428,
       rows: rows([
-        ["BPTT", [["air", [0.868, 0.743, 0.833]], ["sym", [0.711, 0.604, 0.718]], ["hrm_half", [0.771, 0.778, 0.859]], ["hrm", [0.700, 0.776]]]],
-        ["One-step gradient", [["air", [0.577, 0.553, 0.531]], ["sym", [0.607, 0.587, 0.593]], ["hrm_half", [0.653, 0.613, 0.612]], ["hrm", [0.533, 0.550, 0.492]]]]
+        ["BPTT", [["air", [0.868, 0.743, 0.833]], ["sym", [0.711, 0.652, 0.718]], ["hrm_half", [0.771, 0.777, 0.859]], ["hrm", [0.700, 0.776]]]],
+        ["One-step gradient", [["air", [0.577, 0.553, 0.531]], ["sym", [0.606, 0.611, 0.591]], ["hrm_half", [0.653, 0.613, 0.612]], ["hrm", [0.533, 0.550, 0.492]]]]
       ])
     });
 
@@ -344,6 +342,80 @@
       rows: TASKS.map(function (r) {
         return { label: r[0], series: [{ name: "sym", vals: [r[2]], color: C.other }, { name: "air", vals: [r[1]], color: C.L }], mean: r[1] };
       })
+    });
+    // ---------- line chart with a hover crosshair ----------
+    function lineplot(id, cfg) {
+      var el = document.getElementById(id);
+      el.innerHTML = '<div class="lp-svg"></div><div class="lp-tip"></div>';
+      var box = el.firstChild, tip = el.lastChild, n = cfg.series[0].vals.length;
+      function draw() {
+        var W = Math.max(280, el.clientWidth), H = cfg.height || 250, ml = 40, mr = 104, mt = 8, mb = 34;
+        var X = function (i) { return ml + i / (n - 1) * (W - ml - mr); };
+        var Y = function (v) { return mt + (1 - v / cfg.ymax) * (H - mt - mb); };
+        var s = "";
+        cfg.yticks.forEach(function (k) {
+          s += '<line x1="' + ml + '" y1="' + Y(k) + '" x2="' + (W - mr) + '" y2="' + Y(k) + '" stroke="' + C.grid + '"/>';
+          s += t(ml - 6, Y(k) + 4, k === 0 ? "0" : k.toFixed(2), { size: 12, color: C.soft, anchor: "end", plain: true });
+        });
+        cfg.xticks.forEach(function (k) { s += t(X(k - 1), H - mb + 16, String(k), { size: 12, color: C.soft, plain: true }); });
+        s += t(ml + (W - ml - mr) / 2, H - 3, "imagined frame", { size: 12, color: C.soft, plain: true });
+        cfg.series.forEach(function (se) {
+          var d = se.vals.map(function (v, i) { return (i ? "L" : "M") + X(i).toFixed(1) + "," + Y(v).toFixed(1); }).join("");
+          s += '<path d="' + d + '" fill="none" stroke="' + se.color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"' + (se.dash ? ' stroke-dasharray="5 4"' : "") + "/>";
+        });
+        // labels at the line ends, nudged apart so they never overlap
+        var ends = cfg.series.map(function (se) { return { se: se, y: Y(se.vals[n - 1]) + 4 }; }).sort(function (a, b) { return a.y - b.y; });
+        for (var i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 14) ends[i].y = ends[i - 1].y + 14;
+        ends.forEach(function (e) { s += t(X(n - 1) + 7, e.y, e.se.label, { size: 12, anchor: "start", color: C.ink, plain: true }); });
+        s += '<line class="lp-x" x1="0" y1="' + mt + '" x2="0" y2="' + (H - mb) + '" stroke="#9a968f" stroke-dasharray="3 3" visibility="hidden"/>';
+        s += '<g class="lp-dots" visibility="hidden">' + cfg.series.map(function (se) {
+          return '<circle r="4" fill="' + se.color + '" stroke="#fff" stroke-width="1.5"/>'; }).join("") + "</g>";
+        s += '<rect x="' + ml + '" y="0" width="' + (W - ml - mr) + '" height="' + (H - mb) + '" fill="transparent"/>';
+        box.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '" ' + NS + ">" + s + "</svg>";
+        var svg = box.firstChild, vline = svg.querySelector(".lp-x"), dots = svg.querySelector(".lp-dots");
+        function show(ev) {
+          var r = svg.getBoundingClientRect(), px = ev.clientX - r.left;
+          var i = Math.max(0, Math.min(n - 1, Math.round((px - ml) / (W - ml - mr) * (n - 1))));
+          vline.setAttribute("x1", X(i)); vline.setAttribute("x2", X(i)); vline.setAttribute("visibility", "visible");
+          dots.setAttribute("visibility", "visible");
+          cfg.series.forEach(function (se, k) { var c = dots.children[k]; c.setAttribute("cx", X(i)); c.setAttribute("cy", Y(se.vals[i])); });
+          tip.innerHTML = "<strong>Frame " + (i + 1) + "</strong><br>" + cfg.series.slice().sort(function (a, b) { return a.vals[i] - b.vals[i]; }).map(function (se) {
+            return '<i class="ln' + (se.dash ? " dash" : "") + '" style="color:' + se.color + '"></i>' + esc(se.label) + ": " + se.vals[i].toFixed(3); }).join("<br>");
+          tip.style.display = "block";
+          var left = X(i) + 12;
+          if (left + tip.offsetWidth > W) left = X(i) - 12 - tip.offsetWidth;
+          tip.style.left = left + "px"; tip.style.top = mt + "px";
+        }
+        function hide() { vline.setAttribute("visibility", "hidden"); dots.setAttribute("visibility", "hidden"); tip.style.display = "none"; }
+        svg.addEventListener("pointermove", show);
+        svg.addEventListener("pointerdown", show);
+        svg.addEventListener("pointerleave", hide);
+      }
+      draw();
+      var w = el.clientWidth;
+      new ResizeObserver(function () { if (el.clientWidth !== w) { w = el.clientWidth; draw(); } }).observe(el);
+    }
+
+    // 18-task models, per-step error (mean over 3 seeds; Transformer: seed 0), from eval/metrics.json
+    lineplot("fig-horizon", {
+      ymax: 0.2, yticks: [0, 0.05, 0.1, 0.15, 0.2], xticks: [1, 6, 12, 18, 24],
+      series: [
+        { label: "Transformer", color: "#eb6834", vals: [0.0023, 0.005, 0.0085, 0.0122, 0.017, 0.0229, 0.0303, 0.038, 0.0465, 0.0563, 0.0669, 0.0786, 0.0903, 0.1021, 0.1143, 0.1255, 0.1353, 0.1443, 0.1517, 0.1582, 0.1646, 0.1703, 0.1759, 0.1808] },
+        { label: "sym", color: C.other, vals: [0.0086, 0.0177, 0.0276, 0.0378, 0.0481, 0.0585, 0.0686, 0.0776, 0.0863, 0.0939, 0.101, 0.1076, 0.1133, 0.1192, 0.1244, 0.1292, 0.1338, 0.1381, 0.1423, 0.146, 0.1494, 0.1524, 0.1553, 0.1583] },
+        { label: "air", color: C.L, vals: [0.0084, 0.0161, 0.0249, 0.0339, 0.043, 0.0522, 0.0612, 0.0693, 0.0777, 0.0852, 0.092, 0.0984, 0.104, 0.1095, 0.1143, 0.1186, 0.1225, 0.126, 0.1295, 0.1329, 0.1362, 0.1393, 0.1419, 0.1447] },
+        { label: "hrm_half", color: "#1baf7a", vals: [0.0067, 0.013, 0.0199, 0.0269, 0.0342, 0.0418, 0.0493, 0.0563, 0.0631, 0.0694, 0.0753, 0.0813, 0.0868, 0.0922, 0.097, 0.1013, 0.1054, 0.1095, 0.1131, 0.1166, 0.1202, 0.1234, 0.1261, 0.129] },
+        { label: "air, own state", color: C.L, dash: true, vals: [0.0084, 0.0217, 0.0284, 0.0331, 0.037, 0.0404, 0.0438, 0.0464, 0.0489, 0.0511, 0.0532, 0.055, 0.0564, 0.058, 0.0597, 0.061, 0.0625, 0.0642, 0.0656, 0.0668, 0.0682, 0.0694, 0.0704, 0.0717] }
+      ]
+    });
+    lineplot("fig-horizon-cc", {
+      ymax: 0.07, yticks: [0, 0.02, 0.04, 0.06], xticks: [1, 6, 12, 18, 24],
+      series: [
+        { label: "Transformer", color: "#eb6834", vals: [0.0033, 0.0058, 0.008, 0.0098, 0.0123, 0.0142, 0.0162, 0.0185, 0.0221, 0.0265, 0.0319, 0.0381, 0.0445, 0.0505, 0.0554, 0.0594, 0.0625, 0.0651, 0.067, 0.067, 0.0666, 0.0664, 0.0667, 0.0677] },
+        { label: "sym", color: C.other, vals: [0.0049, 0.011, 0.0177, 0.0236, 0.0288, 0.0332, 0.0368, 0.0396, 0.0426, 0.0449, 0.0468, 0.0488, 0.0499, 0.0511, 0.052, 0.0526, 0.0531, 0.0534, 0.0536, 0.0537, 0.0541, 0.0541, 0.054, 0.0543] },
+        { label: "air", color: C.L, vals: [0.0036, 0.008, 0.0128, 0.0168, 0.0207, 0.024, 0.0265, 0.0289, 0.0311, 0.0332, 0.035, 0.0368, 0.0382, 0.0396, 0.0405, 0.0412, 0.0417, 0.0433, 0.044, 0.0444, 0.0449, 0.0459, 0.0463, 0.0471] },
+        { label: "hrm_half", color: "#1baf7a", vals: [0.0038, 0.0084, 0.0136, 0.0184, 0.0229, 0.0267, 0.03, 0.0324, 0.0347, 0.0367, 0.0382, 0.0396, 0.0414, 0.0427, 0.0433, 0.0441, 0.0447, 0.0456, 0.0462, 0.0465, 0.0471, 0.0477, 0.048, 0.0486] },
+        { label: "air, own state", color: C.L, dash: true, vals: [0.0036, 0.0099, 0.0126, 0.0145, 0.0162, 0.0175, 0.0185, 0.0191, 0.0197, 0.0204, 0.0211, 0.0217, 0.0223, 0.0225, 0.0227, 0.0231, 0.0234, 0.0241, 0.0244, 0.0246, 0.0249, 0.0252, 0.0254, 0.0257] }
+      ]
     });
   })();
   </script>
