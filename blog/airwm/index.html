@@ -76,7 +76,7 @@
     <h1>Two Roles in a World Model</h1>
     <p class="subtitle">AIR's specialization carries over from puzzles to a recurrent world model</p>
     <p class="meta"><strong>Jucheng Shen</strong></p>
-    <p class="meta venue">Work in progress | Last updated Nov 11, 2026 | follow-up to <a href="../air/">One Model, Two Roles</a> (AIR)</p>
+    <p class="meta venue">Work in progress | Last updated Nov 12, 2026 | follow-up to <a href="../air/">One Model, Two Roles</a> (AIR)</p>
 
     <div class="summary">
       <p><strong>TL;DR:</strong> In <a href="../air/">AIR</a>, one network updates two latent states, and only one of the two updates sees the input. On puzzles, that alone was enough for the two states to take on different jobs. Here we use AIR as a world model that predicts video of simulated robots one step at a time, and the same split shows up again, both on a single task and in a model trained on all 18 tasks of DeepMind Control. Two caveats:</p>
@@ -162,18 +162,18 @@
         <div class="lp-panel"><div class="lp-sub">cup-catch</div><div class="plot lp" id="fig-horizon-cc"></div></div>
         <div class="lp-panel"><div class="lp-sub">18 tasks</div><div class="plot lp" id="fig-horizon"></div></div>
       </div>
-      <figcaption>Mean squared error of the latent tokens at each of the 24 imagined frames, mean over 3 seeds (18-task Transformer: one seed). Solid lines: each prediction is fed back as the next input. Dashed: air imagines in its own state, for reference. The two panels have different scales. Hover or tap for the values. The recurrent models are trained with BPTT.</figcaption>
+      <figcaption>Mean squared error of the latent tokens at each of the 24 imagined frames, mean over 3 seeds. Solid lines: each prediction is fed back as the next input. Dashed: air imagines in its own state, for reference. The two panels have different scales. Hover or tap for the values. The recurrent models are trained with BPTT.</figcaption>
     </figure>
     <p><strong>On cup-catch, the Transformer is better for the first 11 frames and worse after that.</strong> By the 24th frame its error is 44% higher than air's, and over all 24 frames it is 19% higher, with every Transformer seed worse than every air seed.</p>
-    <p><strong>On the 18 tasks, the pattern is the same, with a larger early advantage for the Transformer.</strong> Its first-frame error is less than a third of air's and it stays ahead for 14 frames, but by the 24th frame its error is 25% higher. Over all 24 frames it ends up about the same as air and 13% worse than hrm_half. It also depends much more on the task: it is about twice as good as air on cartpole and three times as good on reacher, but three times worse on cheetah and four times worse on pendulum. The 18-task Transformer is a single seed (its three cup-catch seeds are within about 5% of each other), and we did not tune it.</p>
-    <p><strong>Imagining in its own latent state, rather than from its own predicted frames, further reduces air's error.</strong> Fed back, air's error is 0.0331 on cup-catch and 0.0909 on the 18 tasks; in its own state it is 0.0201 and 0.0517, and it outperforms the Transformer from the 9th frame on cup-catch and from the 10th on the 18 tasks.</p>
+    <p><strong>On the 18 tasks, the Transformer is again better early and worse late, but its early lead is large enough to make it more accurate than air over all 24 frames.</strong> Its first-frame error is less than a third of air's and it stays ahead for 17 frames, but by the 24th frame its error is 16% higher than air's and 31% higher than hrm_half's. Over all 24 frames its error is 12% lower than air's and close to hrm_half's (3% higher). It also depends much more on the task: it is about twice as good as air on cartpole and three to four times as good on reacher, but 2.4 times worse on cheetah and 3.7 times worse on pendulum. Its seeds vary more than air's (0.076 to 0.087 over all 24 frames, against 0.089 to 0.094 for air), and we did not tune it.</p>
+    <p><strong>Imagining in its own latent state, rather than from its own predicted frames, further reduces air's error.</strong> Fed back, air's error is 0.0331 on cup-catch and 0.0909 on the 18 tasks; in its own state it is 0.0201 and 0.0517, and it outperforms the Transformer from the 9th frame on cup-catch and from the 10th on the 18 tasks. Over all 24 frames, its error is then about half the Transformer's on cup-catch and about a third lower on the 18 tasks.</p>
 
     <h2>What it means</h2>
     <ul>
       <li><strong>Where the input enters decides the roles.</strong> The split we saw on puzzles survives continuous dynamics, changing frames and imagination, and it does not need separate weights.</li>
       <li><strong>How the gradient flows decides what gets remembered.</strong> <a href="https://arxiv.org/abs/2506.21734" target="_blank" rel="noopener noreferrer">HRM</a>, <a href="https://arxiv.org/abs/2510.04871" target="_blank" rel="noopener noreferrer">TRM</a> and <a href="https://arxiv.org/abs/2605.17811" target="_blank" rel="noopener noreferrer">AIR</a> all cut the gradient between supervision steps: HRM and AIR keep only a one-step gradient within a step, and TRM backpropagates through its last full recursion. This keeps training inexpensive and is sufficient when the input does not change. A world model has to carry information from one step to the next, so its gradient has to cross steps too. Here that took full backpropagation through time, at about twice the training time and three times the GPU memory.</li>
       <li><strong>On a large, diverse task set, separate shallow networks are the most accurate.</strong> On the 18 tasks, hrm_half's error is 20&ndash;23% lower than that of one shared network, whether the shared network has its depth or twice it. Separate networks at full depth (hrm) do not help, so the advantage appears to come from combining separate weights with shallow networks.</li>
-      <li><strong>A recurrent state is most useful at long horizons.</strong> A Transformer that attends over all past frames predicts the next several frames more accurately, whereas the recurrent models accumulate less error over 24 frames, especially when they imagine in their own state.</li>
+      <li><strong>A recurrent state is most useful at long horizons.</strong> A Transformer that attends over all past frames is more accurate for the first 11 to 17 frames, whereas the recurrent models' error grows more slowly, so they are more accurate by the 24th frame, especially when they imagine in their own state.</li>
     </ul>
 
     <h2>Next steps</h2>
@@ -396,11 +396,11 @@
       new ResizeObserver(function () { if (el.clientWidth !== w) { w = el.clientWidth; draw(); } }).observe(el);
     }
 
-    // 18-task models, per-step error (mean over 3 seeds; Transformer: seed 0), from eval/metrics.json
+    // 18-task models, per-step error (mean over 3 seeds), from eval/metrics.json
     lineplot("fig-horizon", {
       ymax: 0.2, yticks: [0, 0.05, 0.1, 0.15, 0.2], xticks: [1, 6, 12, 18, 24],
       series: [
-        { label: "Transformer", color: "#eb6834", vals: [0.0023, 0.005, 0.0085, 0.0122, 0.017, 0.0229, 0.0303, 0.038, 0.0465, 0.0563, 0.0669, 0.0786, 0.0903, 0.1021, 0.1143, 0.1255, 0.1353, 0.1443, 0.1517, 0.1582, 0.1646, 0.1703, 0.1759, 0.1808] },
+        { label: "Transformer", color: "#eb6834", vals: [0.0023, 0.0051, 0.0086, 0.0124, 0.0171, 0.0227, 0.0293, 0.0361, 0.0439, 0.0524, 0.0615, 0.0713, 0.0813, 0.0917, 0.1019, 0.1119, 0.1209, 0.1297, 0.1376, 0.1447, 0.1515, 0.1576, 0.1632, 0.1685] },
         { label: "sym", color: C.other, vals: [0.0086, 0.0177, 0.0276, 0.0378, 0.0481, 0.0585, 0.0686, 0.0776, 0.0863, 0.0939, 0.101, 0.1076, 0.1133, 0.1192, 0.1244, 0.1292, 0.1338, 0.1381, 0.1423, 0.146, 0.1494, 0.1524, 0.1553, 0.1583] },
         { label: "air", color: C.L, vals: [0.0084, 0.0161, 0.0249, 0.0339, 0.043, 0.0522, 0.0612, 0.0693, 0.0777, 0.0852, 0.092, 0.0984, 0.104, 0.1095, 0.1143, 0.1186, 0.1225, 0.126, 0.1295, 0.1329, 0.1362, 0.1393, 0.1419, 0.1447] },
         { label: "hrm_half", color: "#1baf7a", vals: [0.0067, 0.013, 0.0199, 0.0269, 0.0342, 0.0418, 0.0493, 0.0563, 0.0631, 0.0694, 0.0753, 0.0813, 0.0868, 0.0922, 0.097, 0.1013, 0.1054, 0.1095, 0.1131, 0.1166, 0.1202, 0.1234, 0.1261, 0.129] },
