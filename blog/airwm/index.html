@@ -78,10 +78,10 @@
     <p class="meta venue">Work in progress | Last updated Nov 17, 2026 | follow-up to <a href="../air/">One Model, Two Roles</a> (AIR)</p>
 
     <div class="summary">
-      <p><strong>TL;DR:</strong> In <a href="../air/">AIR</a>, one network updates two latent states, and only one of the two updates sees the input. On puzzles, that alone was enough for the two states to take on different jobs. Here we use AIR as a world model that predicts video of simulated robots one step at a time, and the same split shows up again, both on a single task and in a model trained on all 18 tasks of DeepMind Control. Two caveats:</p>
+      <p><strong>TL;DR:</strong> In <a href="../air/">AIR</a>, one network updates two latent states, and only one of the two updates sees the input. On puzzles, that alone was enough for the two states to take on different jobs. Here we use AIR as a world model that predicts video of simulated robots one step at a time, and the same split shows up again, both on a single task and in a model trained on all 18 tasks of DeepMind Control. Along the way we found that AIR's six updates per step are too many for a world model: with one L-update and one H-update per step, the same shared network becomes the most accurate model here, at a third of the compute. Two caveats:</p>
       <ul>
         <li>To remember what a single frame cannot show, such as how fast something is moving, the model needs gradients through time. AIR's usual one-step gradient does not provide them.</li>
-        <li>With AIR's six updates per time step, one shared network is as accurate as two separate half-size networks on a single task but less accurate on all 18 tasks. With one L-update and one H-update per step instead, the shared network becomes the most accurate model we trained, at a third of the compute.</li>
+        <li>With AIR's six updates per step, one shared network is as accurate as two separate half-size networks on a single task but less accurate on all 18 tasks; the one-update-pair variant removes that gap.</li>
       </ul>
     </div>
 
@@ -128,10 +128,10 @@
     <p><strong>In our runs, only backpropagation through time taught the model to remember.</strong> With the one-step gradient, every model stays fairly close to the dashed line: <i>z</i><sub>H</sub> knows only a little more than a single frame shows. With BPTT, air reaches an R&sup2; of 0.81, and its error on the first predicted frame drops about 9 times. The 18-task models follow the same pattern: air trained with BPTT reaches 0.50, while the one-step models reach 0.38&ndash;0.39 and the frame alone 0.40.</p>
 
     <h2>3. Accuracy</h2>
-    <p><strong>To measure accuracy, each model sees 8 frames and then imagines the next 24 on its own.</strong> The figure shows what the imagined frames look like, and the table gives the error over those 24 frames. All models here are trained with BPTT.</p>
+    <p><strong>To measure accuracy, each model sees 8 frames and then imagines the next 24 on its own.</strong> The figure shows what the imagined frames look like, for air and for the one-update-pair variant introduced below, and the table gives the error over those 24 frames. All models here are trained with BPTT.</p>
     <figure>
-      <img src="../../assets/img/posts/airwm/rollouts.jpg" width="768" height="591" alt="Three pairs of frame rows: a ball-in-cup robot, a cart with a pole, and a legged robot. In each pair the true frames are on top and air's imagined frames below; the imagined frames match closely at first and blur or drift later, most for the legged robot.">
-      <figcaption>What air imagines. In each pair, the top row shows the true frames (as reconstructed by the tokenizer) and the bottom row what air predicts in its own state after seeing 8 frames: every 3rd imagined frame, from the 1st (left) to the 22nd (right). Top: the cup-catch model. Middle and bottom: the 18-task model on cartpole and on a legged robot. Both are trained with BPTT (seed 0). The predictions stay sharp at first; over longer horizons, fast-moving parts blur and drift.</figcaption>
+      <img src="../../assets/img/posts/airwm/rollouts.jpg?v=20261117" width="768" height="782" alt="Frame rows for a ball-in-cup robot, a cart with a pole, and a legged robot. For cup-catch, the true frames are on top and air's imagined frames below. For cartpole and the legged robot, three rows: the true frames, air with six updates per step, and air with one update pair per step. air's pole and limbs blur after about ten imagined frames; with one update pair they stay sharp longer.">
+      <figcaption>What air imagines in its own state after seeing 8 frames: every 3rd imagined frame, from the 1st (left) to the 22nd (right). <strong>Top:</strong> the cup-catch model; true frames (as reconstructed by the tokenizer) above, air's prediction below. <strong>Middle and bottom:</strong> the 18-task models on cartpole and on a legged robot; in each group, the rows are the true frames, air with six updates per step, and air with one update pair per step, on the same windows. All trained with BPTT, seed 0. air's predictions blur where parts move fast, the pole from about the 10th imagined frame; with one update pair they stay sharp longer and the legged robot keeps its shape.</figcaption>
     </figure>
     <div class="table-wrap">
       <table>
@@ -139,12 +139,12 @@
           <tr><th>BPTT model</th><th class="num">cup-catch</th><th class="num">18 tasks</th></tr>
         </thead>
         <tbody>
-          <tr class="strong"><td>air</td><td class="num">0.0201</td><td class="num">0.0517</td></tr>
+          <tr class="strong"><td>air, one update pair per step (a third of the compute)</td><td class="num">&ndash;</td><td class="num">0.0353</td></tr>
+          <tr><td>air (AIR's six updates per step)</td><td class="num">0.0201</td><td class="num">0.0517</td></tr>
           <tr><td>sym</td><td class="num">0.0289</td><td class="num">0.0699</td></tr>
           <tr><td>hrm_half (two networks, same parameters)</td><td class="num">0.0211</td><td class="num">0.0396</td></tr>
           <tr><td>hrm (two networks, 2&times; parameters)</td><td class="num">0.0303&dagger;</td><td class="num">0.0542</td></tr>
           <tr><td>air, 2-layer block (half the parameters)</td><td class="num">&ndash;</td><td class="num">0.0495</td></tr>
-          <tr><td>air, one update pair per step (a third of the compute)</td><td class="num">&ndash;</td><td class="num"><strong>0.0353</strong></td></tr>
           <tr><td>hrm, one update pair per step</td><td class="num">&ndash;</td><td class="num">0.0349</td></tr>
           <tr><td>repeat the last frame</td><td class="num">0.236</td><td class="num">0.165</td></tr>
         </tbody>
