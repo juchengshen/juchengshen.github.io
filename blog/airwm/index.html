@@ -280,7 +280,7 @@
     <p><strong>Which model wins depends on the task.</strong> Fed back, air is ahead on 13 of the 18 tasks. The Transformer is about twice as good on the two reacher tasks and about 20% better on three of the four cartpole tasks, but about four times worse on cheetah and seven times worse on pendulum.</p>
     <figure class="chart">
       <div class="chart-title">air's error divided by the Transformer's, per task</div>
-      <div class="chart-key"><span><i class="dot" style="background:#4f7fd6"></i><span class="k">both fed back</span></span><span><i class="dot hollow" style="border-color:#4f7fd6"></i><span class="k">air in its own state</span></span><span>&larr; air better</span><span>Transformer better &rarr;</span></div>
+      <div class="chart-key"><span><i class="dot" style="background:#4f7fd6"></i><span class="k">both fed back</span></span><span><i class="dot hollow" style="border-color:#4f7fd6"></i><span class="k">air in its own state</span></span><span class="key-side">&larr; air better</span><span class="key-side">Transformer better &rarr;</span></div>
       <div class="plot" id="fig-vs"></div>
       <figcaption>air's error divided by the Transformer's over the 24 imagined frames, per task; below 1, air is more accurate. Solid: both fed back; the number on the right is this ratio. Hollow: air in its own state. Means over 3 seeds. Log scale.</figcaption>
     </figure>
@@ -454,17 +454,26 @@
         cfg.rows.forEach(function (r) { if (!r.group) lw = Math.max(lw, Math.ceil(textW(r.label, fs, r.hi)) + 10); });
         var x0 = lw, x1 = W - vw;
         var ticks = (x1 - x0 < 220 && cfg.ticksNarrow) ? cfg.ticksNarrow : cfg.ticks;
-        var top = 22, rh = cfg.rowH || 24, gh = 26, y = top, s = "";
         var lo = cfg.log ? Math.log10(cfg.domain[0]) : cfg.domain[0], hi = cfg.log ? Math.log10(cfg.domain[1]) : cfg.domain[1];
         var X = function (v) { var u = cfg.log ? Math.log10(v) : v; return x0 + 8 + (u - lo) / (hi - lo) * (x1 - x0 - 16); };
+        // direction labels flank the reference line when there is room; otherwise they stay in the legend above
+        var sides = cfg.sides && cfg.ref && X(cfg.ref) + 9 + textW(cfg.sides[1], 12, true) <= W && X(cfg.ref) - 9 - textW(cfg.sides[0], 12, true) >= 0;
+        var key = cfg.sides && el.parentNode.querySelectorAll(".key-side");
+        if (key) Array.prototype.forEach.call(key, function (k) { k.style.display = sides ? "none" : ""; });
+        var top = sides ? 40 : 22, rh = cfg.rowH || 24, gh = 26, y = top, s = "";
         var H = top + 6;
         cfg.rows.forEach(function (r) { H += r.group ? gh : rh; });
         var Hp = H;                                       // bottom of the plot area
         if (cfg.ref && cfg.refLabel && cfg.refLabelBottom) H += 14;
         ticks.forEach(function (k) {
           s += '<line x1="' + X(k) + '" y1="' + (top - 4) + '" x2="' + X(k) + '" y2="' + (Hp - 4) + '" stroke="' + C.grid + '"/>';
-          s += t(X(k), 12, cfg.tick(k), { size: 12, color: C.soft });
+          s += t(X(k), top - 10, cfg.tick(k), { size: 12, color: C.soft });
         });
+        if (sides) {
+          s += t(X(cfg.ref) - 9, 12, cfg.sides[0], { size: 12, color: C.ink, anchor: "end", weight: 600, plain: true });
+          s += t(X(cfg.ref) + 9, 12, cfg.sides[1], { size: 12, color: C.ink, anchor: "start", weight: 600, plain: true });
+          s += '<line x1="' + X(cfg.ref) + '" y1="2" x2="' + X(cfg.ref) + '" y2="16" stroke="#9a968f"/>';
+        }
         if (cfg.ref) {
           s += '<line x1="' + X(cfg.ref) + '" y1="' + (top - 4) + '" x2="' + X(cfg.ref) + '" y2="' + (Hp - 4) + '" stroke="#9a968f" stroke-dasharray="4 3"/>';
           if (cfg.refLabel) s += cfg.refLabelBottom
@@ -572,7 +581,7 @@
       ["cartpole-balance-sparse", 1.27, 0.41], ["reacher-easy", 1.828, 0.882], ["reacher-hard", 2.129, 0.905]];
     dotplot("fig-vs", {
       log: true, domain: [0.028, 2.6], ticks: [0.05, 0.1, 0.2, 0.5, 1, 2], ticksNarrow: [0.1, 1], tick: function (k) { return String(k); }, fmt: f2,
-      rowH: 22, ref: 1, refLabel: "tie", refLabelBottom: true,
+      rowH: 22, ref: 1, refLabel: "tie", refLabelBottom: true, sides: ["← air better", "Transformer better →"],
       rows: VS.map(function (r) {
         return { label: r[0], mean: r[1], series: [{ name: "air in its own state", vals: [r[2]], color: C.L, hollow: true }, { name: "both fed back", vals: [r[1]], color: C.L }] };
       })
@@ -693,8 +702,8 @@
       var el = document.getElementById(id), G = "#3fa56f", GR = "#8b8983", GT = "#23704a";
       function draw() {
         var W = Math.max(300, el.clientWidth), two = W < 600, s = "";
-        var wF = two ? 56 : 64, wA = two ? 130 : 150, wD = two ? 58 : 66;
-        var wd = [wF, 96, 62, wA, 38, wD, wF], xs = [], cy = [], H;
+        var wF = two ? 56 : 64, wA = two ? 130 : 150, wD = two ? 58 : 66, wT = two ? 112 : 124;
+        var wd = [wF, wT, 62, wA, 38, wD, wF], xs = [], cy = [], H;
         if (!two) {
           var gap = (W - 8 - wd.reduce(function (a, b) { return a + b; }, 0)) / 6, x = 4;
           wd.forEach(function (w) { xs.push(x); cy.push(88); x += w + gap; }); H = 162;
@@ -710,9 +719,9 @@
         s += t(mid(0), cy[0] + wF / 2 + 15, "frame t", { size: 12, color: C.soft, plain: true });
         s += arr(xs[0] + wF + 3, cy[0], xs[1] - 3, cy[1], GR);
         // 2 tokenizer
-        s += '<rect x="' + xs[1] + '" y="' + (cy[1] - 22) + '" width="96" height="44" rx="7" fill="#eeece7" stroke="#b5b1aa" stroke-width="1.4"/>';
+        s += '<rect x="' + xs[1] + '" y="' + (cy[1] - 23) + '" width="' + wT + '" height="46" rx="7" fill="#eeece7" stroke="#b5b1aa" stroke-width="1.4"/>';
         s += t(mid(1), cy[1] - 1, "Tokenizer", { size: 13, weight: 600, plain: true }) + t(mid(1), cy[1] + 14, "pretrained, frozen", { size: 11, color: C.soft, plain: true });
-        s += arr(xs[1] + 99, cy[1], xs[2] - 3, cy[2], GR);
+        s += arr(xs[1] + wT + 3, cy[1], xs[2] - 3, cy[2], GR);
         // 3 x_t: 16 latent tokens + action + task
         s += tokens(xs[2], cy[2] - 19, "#dcf0e4", G);
         s += '<rect x="' + (xs[2] + 46) + '" y="' + (cy[2] - 15) + '" width="12" height="12" rx="2" fill="' + G + '"/><rect x="' + (xs[2] + 46) + '" y="' + (cy[2] + 3) + '" width="12" height="12" rx="2" fill="#8ccfa9"/>';
