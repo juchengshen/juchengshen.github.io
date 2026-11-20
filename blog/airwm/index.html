@@ -176,7 +176,7 @@
       <figcaption>Each dot is one seed; the number on the right is the geometric mean. Log scale. 1&times; means the two states are interchangeable.</figcaption>
     </figure>
     <p><strong>The two states split whenever only one update sees the frame, whether or not they share weights.</strong> In air, reading the prediction from <i>z</i><sub>L</sub> is about 500 times worse than from <i>z</i><sub>H</sub> with BPTT, and still about 90 times worse with the one-step gradient. In sym, where the frame goes into both updates, the ratio is between 5 and 7 with BPTT and below 3 with the one-step gradient. The two-network models, hrm_half and hrm, split just like air. The split persists while the model imagines, at a smaller ratio: with BPTT, 97 for air against 2.1 for sym.</p>
-    <p><strong>A large ratio alone would not show that the two states have different jobs.</strong> The head was never trained on <i>z</i><sub>L</sub>, so a high ratio only says that <i>z</i><sub>L</sub> is not written in the form the head reads. Two things make it more than that. The sym control has the same head and the same two states, and its ratio stays near 1. And <i>z</i><sub>L</sub> is not empty: a linear probe recovers the simulator's physical state from it at least as well as from <i>z</i><sub>H</sub> (Section 2). So <i>z</i><sub>H</sub> is the output-facing state, holding the next frame in the form the head reads, and <i>z</i><sub>L</sub> is the input-facing state, holding information in another form, much like the scratchpad it was on puzzles.</p>
+    <p><strong>A large ratio alone would not show that the two states have different jobs.</strong> The head was never trained on <i>z</i><sub>L</sub>, so a high ratio only says that <i>z</i><sub>L</sub> is not written in the form the head reads. Three things make it more than that. The sym control has the same head and the same two states, and its ratio stays near 1. And <i>z</i><sub>L</sub> is not empty: a linear probe recovers the simulator's physical state from it at least as well as from <i>z</i><sub>H</sub> (Section 2). And the two updates are not interchangeable: sending the frame into the H-update instead of the L-update at test time raises air's error from 0.0123 to about 1.1 on cup-catch and from 0.0353 to about 0.96 on the 18 tasks, far above predicting that nothing moves. So <i>z</i><sub>H</sub> is the output-facing state, holding the next frame in the form the head reads, and <i>z</i><sub>L</sub> is the input-facing state, holding information in another form, much like the scratchpad it was on puzzles.</p>
     <p><strong>The same split holds on every one of the 18 tasks.</strong> Cup-catch is a single task, so we also trained one model on all 18 tasks:</p>
     <figure class="chart">
       <div class="chart-title">Readout ratio per task, 18-task models (BPTT)</div>
@@ -294,23 +294,34 @@
     </figure>
 
     <h2>5. One update of each state per time step beats AIR's six</h2>
-    <p><strong>AIR itself runs six updates per step, and in a world model that is worse than one update of each state.</strong> On puzzles, AIR updates <i>z</i><sub>L</sub> twice, then <i>z</i><sub>H</sub> once, and repeats this: (L,&nbsp;L,&nbsp;H,&nbsp;L,&nbsp;L,&nbsp;H). We first ported that schedule unchanged; every model above instead uses (L,&nbsp;H). The table compares the two schedules for each variant.</p>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th></th><th class="num" colspan="2">cup-catch</th><th class="num" colspan="2">18 tasks</th></tr>
-          <tr><th>Schedule</th><th class="num">six updates</th><th class="num">(L,&nbsp;H)</th><th class="num">six updates</th><th class="num">(L,&nbsp;H)</th></tr>
-        </thead>
-        <tbody>
-          <tr class="strong"><td>air</td><td class="num">0.0201</td><td class="num">0.0123</td><td class="num">0.0517</td><td class="num">0.0353</td></tr>
-          <tr><td>sym</td><td class="num">0.0289</td><td class="num">0.0176</td><td class="num">0.0699</td><td class="num">0.0411</td></tr>
-          <tr><td>hrm_half</td><td class="num">0.0211</td><td class="num">0.0108</td><td class="num">0.0396</td><td class="num">0.0329</td></tr>
-          <tr><td>hrm</td><td class="num">0.0303&dagger;</td><td class="num">0.0136</td><td class="num">0.0542</td><td class="num">0.0349</td></tr>
-          <tr><td>air, one-step gradient</td><td class="num">0.0511</td><td class="num">0.0342</td><td class="num">0.0709&Dagger;</td><td class="num">0.0459</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="table-note">Error as defined in Setup; all rows but the last are trained with BPTT. &dagger; two seeds (the third diverged at the start of training); &Dagger; one seed.</p>
+    <p><strong>AIR itself runs six updates per step, and in a world model that is worse than one update of each state.</strong> On puzzles, AIR updates <i>z</i><sub>L</sub> twice, then <i>z</i><sub>H</sub> once, and repeats this: (L,&nbsp;L,&nbsp;H,&nbsp;L,&nbsp;L,&nbsp;H). We first ported that schedule unchanged; every model above instead uses (L,&nbsp;H). The figure compares the two schedules for each variant.</p>
+    <figure class="chart">
+      <div class="chart-title">Error with six updates per step and with (L,&nbsp;H)</div>
+      <div class="chart-key"><span><i class="dot hollow" style="border-color:#807c75"></i><span class="k">six updates</span></span><span><i class="dot" style="background:#807c75"></i><span class="k">(L,&nbsp;H)</span></span></div>
+      <div class="lp-panels">
+        <div class="lp-panel"><div class="lp-sub">cup-catch</div><div class="plot" id="fig-sched-cc"></div></div>
+        <div class="lp-panel"><div class="lp-sub">18 tasks</div><div class="plot" id="fig-sched"></div></div>
+      </div>
+      <figcaption>Error as defined in Setup, for each variant under the two schedules; the number on the right is the change. All rows but the last are trained with BPTT. &dagger; two seeds (the third diverged at the start of training); &Dagger; one seed.</figcaption>
+    </figure>
+    <details class="more">
+      <summary>The same numbers as a table</summary>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th></th><th class="num" colspan="2">cup-catch</th><th class="num" colspan="2">18 tasks</th></tr>
+            <tr><th>Schedule</th><th class="num">six updates</th><th class="num">(L,&nbsp;H)</th><th class="num">six updates</th><th class="num">(L,&nbsp;H)</th></tr>
+          </thead>
+          <tbody>
+            <tr class="strong"><td>air</td><td class="num">0.0201</td><td class="num">0.0123</td><td class="num">0.0517</td><td class="num">0.0353</td></tr>
+            <tr><td>sym</td><td class="num">0.0289</td><td class="num">0.0176</td><td class="num">0.0699</td><td class="num">0.0411</td></tr>
+            <tr><td>hrm_half</td><td class="num">0.0211</td><td class="num">0.0108</td><td class="num">0.0396</td><td class="num">0.0329</td></tr>
+            <tr><td>hrm</td><td class="num">0.0303&dagger;</td><td class="num">0.0136</td><td class="num">0.0542</td><td class="num">0.0349</td></tr>
+            <tr><td>air, one-step gradient</td><td class="num">0.0511</td><td class="num">0.0342</td><td class="num">0.0709&Dagger;</td><td class="num">0.0459</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
     <p><strong>(L,&nbsp;H) is more accurate for every variant, by 17% to 55%, at a third of the compute per step.</strong> Training is also more consistent: on the 18 tasks air's three seeds span 0.0007, against 0.0067 with six updates. Even with the one-step gradient, air with (L,&nbsp;H) is more accurate than air with six updates and BPTT (0.0459 against 0.0517 on the 18 tasks).</p>
     <p><strong>The findings of Sections 1 to 4 hold under both schedules, except for two comparisons.</strong> With six updates, air also specializes (a readout ratio of 255 on cup-catch and 90 pooled over the 18 tasks, against about 500 and 196 with (L,&nbsp;H)), also needs BPTT to remember, and is also more accurate than sym. What changes is how air compares with the other architectures on the 18 tasks. With six updates, hrm_half is 23% more accurate than air; with (L,&nbsp;H), 7%. And with six updates, the Transformer is 12% more accurate than air over 24 frames fed back; with (L,&nbsp;H), air is 19% more accurate.</p>
     <p><strong>Which part of the six-update schedule hurts is not yet clear.</strong> The extra updates lengthen the path the gradient travels (768 layers over 32 steps instead of 256), overwrite the states more often, and inject the frame more often. Halving the depth of the network while keeping six updates does not help (0.0495 on the 18 tasks). The schedules in between should separate these explanations:</p>
@@ -360,6 +371,7 @@
     <ul>
       <li>Find out why six updates per step are worse than two, starting with the schedules in between (Section 5).</li>
       <li>Train with windows longer than 32 steps, since accuracy still improves as the gradient reaches further.</li>
+      <li>Compare against a Transformer that is trained to imagine, with scheduled sampling and with Dreamer&nbsp;4's noise objective.</li>
       <li>Put the model to use the way world models are meant to be used: for planning, or for training a policy inside it.</li>
     </ul>
 
@@ -686,6 +698,41 @@
         { label: "air (own state)", color: C.L, dash: true, vals: [0.0065, 0.0109, 0.0146, 0.0181, 0.021, 0.0237, 0.0265, 0.0286, 0.031, 0.0331, 0.0349, 0.0368, 0.0387, 0.0403, 0.0416, 0.0426, 0.0435, 0.0445, 0.0458, 0.0473, 0.0486, 0.0497, 0.0509, 0.0517, 0.0531, 0.0545, 0.0558, 0.0571, 0.0575, 0.0582, 0.059, 0.06, 0.061, 0.0619, 0.0628, 0.0639, 0.0649, 0.0661, 0.0671, 0.0677, 0.0681, 0.0687, 0.0696, 0.0702, 0.0712, 0.0716, 0.0721, 0.0724, 0.0733, 0.0736, 0.074, 0.0747, 0.0752, 0.0755, 0.0759, 0.0761] }
       ]
     });
+
+    // ---------- paired dots: the same model under two update schedules (hollow: six updates, solid: (L, H)) ----------
+    function pairplot(id, cfg) {
+      var el = document.getElementById(id);
+      function draw() {
+        var W = Math.max(240, el.clientWidth), fs = 12.5, lw = 0, vw = 44, rh = 28, top = 22, s = "";
+        cfg.rows.forEach(function (r) { lw = Math.max(lw, Math.ceil(textW(r[0], fs, r[0] === "air")) + 10); });
+        var x0 = lw, x1 = W - vw, X = function (v) { return x0 + 6 + v / cfg.max * (x1 - x0 - 14); };
+        var H = top + cfg.rows.length * rh + 6;
+        cfg.ticks.forEach(function (k) {
+          s += '<line x1="' + X(k) + '" y1="' + (top - 4) + '" x2="' + X(k) + '" y2="' + (H - 4) + '" stroke="' + C.grid + '"/>';
+          s += t(X(k), 12, k === 0 ? "0" : String(k), { size: 12, color: C.soft, plain: true });
+        });
+        cfg.rows.forEach(function (r, i) {
+          var cy = top + i * rh + rh / 2, col = r[0] === "air" ? C.L : C.other, a = X(r[1]), b = X(r[2]);
+          s += t(x0 - 6, cy + 4.5, r[0], { size: fs, anchor: "end", weight: r[0] === "air" ? 600 : null, plain: true });
+          s += '<line x1="' + x0 + '" y1="' + cy + '" x2="' + x1 + '" y2="' + cy + '" stroke="#f3f1ec"/>';
+          s += '<line x1="' + (a - 4) + '" y1="' + cy + '" x2="' + (b + 12) + '" y2="' + cy + '" stroke="' + col + '" stroke-width="1.6"/>';
+          s += '<polygon points="' + (b + 6) + "," + cy + " " + (b + 13) + "," + (cy - 4) + " " + (b + 13) + "," + (cy + 4) + '" fill="' + col + '"/>';
+          s += '<circle cx="' + a + '" cy="' + cy + '" r="4.2" fill="#fff" stroke="' + col + '" stroke-width="1.8"><title>' + esc(r[0] + ", six updates: " + r[1].toFixed(4)) + "</title></circle>";
+          s += '<circle cx="' + b + '" cy="' + cy + '" r="4.8" fill="' + col + '" stroke="#fff" stroke-width="1.5"><title>' + esc(r[0] + ", (L, H): " + r[2].toFixed(4)) + "</title></circle>";
+          if (r[3]) s += t(a + 7, cy - 3, r[3], { size: 11, color: C.soft, anchor: "start", plain: true });
+          s += t(x1 + 8, cy + 4.5, "−" + Math.round((1 - r[2] / r[1]) * 100) + "%", { size: 12.5, anchor: "start", color: C.soft, plain: true });
+        });
+        el.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '" ' + NS + ">" + s + "</svg>";
+      }
+      draw();
+      var w = el.clientWidth;
+      new ResizeObserver(function () { if (el.clientWidth !== w) { w = el.clientWidth; draw(); } }).observe(el);
+    }
+    // error over 24 imagined frames: [variant, six updates, (L, H), mark]
+    pairplot("fig-sched-cc", { max: 0.056, ticks: [0, 0.02, 0.04], rows: [
+      ["air", 0.0201, 0.0123], ["sym", 0.0289, 0.0176], ["hrm_half", 0.0211, 0.0108], ["hrm", 0.0303, 0.0136, "†"], ["air, one-step", 0.0511, 0.0342]] });
+    pairplot("fig-sched", { max: 0.076, ticks: [0, 0.02, 0.04, 0.06], rows: [
+      ["air", 0.0517, 0.0353], ["sym", 0.0699, 0.0411], ["hrm_half", 0.0396, 0.0329], ["hrm", 0.0542, 0.0349], ["air, one-step", 0.0709, 0.0459, "‡"]] });
 
     // ---------- our pipeline: frame -> tokenizer -> x_t -> AIR step -> predicted tokens -> decoder -> frame ----------
     var IMG = "../../assets/img/posts/airwm/";
