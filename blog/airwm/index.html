@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Two Roles in a World Model | Jucheng Shen</title>
-  <meta name="description" content="AIR's two-role specialization carries over to a recurrent world model on DeepMind Control. Updating each state once per step, it predicts 24 frames more accurately than a teacher-forced Transformer twice its size; memory needs gradients through time.">
+  <meta name="description" content="AIR's two-role specialization carries over to a recurrent world model on DeepMind Control. Updating each state once per step, it keeps up with a causal Transformer twice its size over 24 imagined frames; memory needs gradients through time.">
   <link rel="icon" href="../../favicon.ico?v=20261103-1" sizes="16x16 32x32 48x48">
   <link rel="icon" href="../../favicon.svg?v=20261103-1" type="image/svg+xml" sizes="any">
   <link rel="stylesheet" href="../../post.css?v=20261108-1">
@@ -33,6 +33,10 @@
     details.more td:first-child { font-weight: 600; white-space: nowrap; }
     .dot.hollow { background: #fff; border: 1.8px solid; box-sizing: border-box; }
     .lp-wide { flex: 1.5 1 0; }
+    .roll-video { display: block; width: 100%; height: auto; border-radius: 3px; background: #fff; }
+    .roll-narrow { display: none; }
+    .roll-slim { max-width: 270px; margin: 0 auto; }
+    @media (max-width: 600px) { .roll-wide { display: none; } .roll-narrow { display: block; } }
     .strip-scroll { overflow-x: auto; }
     .strip { min-width: 560px; }
     .strip-head { display: grid; grid-template-columns: 76px repeat(8, 1fr); font-size: 0.68rem; color: var(--text-light); text-align: center; margin-bottom: 3px; }
@@ -96,7 +100,7 @@
     <h1>Two Roles in a World Model</h1>
     <p class="subtitle">AIR's specialization carries over from puzzles to a recurrent world model</p>
     <p class="meta"><strong>Jucheng Shen</strong></p>
-    <p class="meta venue">Work in progress | Last updated Nov 20, 2026 | follow-up to <a href="../air/">One Model, Two Roles</a> (AIR)</p>
+    <p class="meta venue">Work in progress | Last updated Nov 22, 2026 | follow-up to <a href="../air/">One Model, Two Roles</a> (AIR)</p>
 
     <div class="summary">
       <p><strong>TL;DR:</strong> <a href="../air/">AIR</a> is a recurrent model in which one shared network takes turns updating two latent states, <i>z</i><sub>L</sub> and <i>z</i><sub>H</sub>, and only the <i>z</i><sub>L</sub> update receives the input. On puzzles, that one asymmetry was enough for the two states to take on different jobs. Here we test whether it survives in a harder setting: a recurrent world model that predicts video of simulated robots (DeepMind Control) one frame at a time. Four findings:</p>
@@ -104,7 +108,7 @@
         <li><strong>The two roles reappear.</strong> Only <i>z</i><sub>H</sub> holds the next-frame prediction. On a single task, the prediction head's error is about 500 times higher when it reads <i>z</i><sub>L</sub> instead, against about 6 times in a control that sends the frame into both updates. The same holds on every one of 18 tasks.</li>
         <li><strong>Memory needs gradients through time.</strong> AIR's usual one-step gradient never teaches the model to remember what a single frame cannot show, such as how fast something is moving. Backpropagation through time does.</li>
         <li><strong>One update of each state per frame beats AIR's six.</strong> It lowers the error by 32&ndash;39% at a third of the compute.</li>
-        <li><strong>The recurrent state overtakes a causal Transformer as the horizon grows.</strong> Against a teacher-forced Transformer with twice the parameters, the error over 24 imagined frames is 64% lower on the single task and 19% lower on the 18 tasks, where the Transformer is still ahead for the first 11 frames.</li>
+        <li><strong>At half the parameters, the recurrent models keep up with a causal Transformer.</strong> Against a Transformer trained with teacher forcing, the error over 24 imagined frames is 64% lower on the single task and 19% lower on the 18 tasks. Once the Transformer is also trained to imagine, the gap shrinks to 17% and 4%, and task by task the Transformer is ahead on 11 of the 18.</li>
       </ol>
       <p>One cost: two separate half-size networks remain 7&ndash;12% more accurate than the one shared network.</p>
     </div>
@@ -133,7 +137,7 @@
     <div class="variants" id="variants"></div>
     <div class="chart-key v-legend"><span><i class="ln" style="color:#3fa56f"></i><span class="k">frame, action and task (<i>x</i><sub><i>t</i></sub>)</span></span><span><i class="ln" style="color:#4f7fd6"></i><span class="k"><i>z</i><sub>L</sub> read by the H-update</span></span><span><i class="ln" style="color:#b5b1aa"></i><span class="k"><i>z</i><sub>H</sub> read by the L-update</span></span><span><i class="ln dash" style="color:#b5b1aa"></i><span class="k">updated by this network</span></span><span><i class="ln" style="color:#df6f64"></i><span class="k">prediction read from <i>z</i><sub>H</sub></span></span></div>
     <p>We write air, in lowercase, for this world-model variant and AIR for the original puzzle model.</p>
-    <p><strong>After the last real frame, the model keeps predicting from the actions alone; we call this imagining.</strong> It can imagine in two ways. <em>In its own state</em>: the 16 frame slots of <i>x</i><sub><i>t</i></sub> are left empty, so <i>x</i><sub><i>t</i></sub> carries only the action and the task, and the two states have to supply everything else. <em>Fed back</em>: each predicted frame is passed in as if it were the real next frame, which is the only option for a model without a state, such as a Transformer. Unless we say &ldquo;fed back&rdquo;, the recurrent models imagine in their own state.</p>
+    <p><strong>After the last real frame, the model keeps predicting from the actions alone; we call this imagining.</strong> It can imagine in two ways. <em>In its own state</em>: the 16 frame slots of <i>x</i><sub><i>t</i></sub> are left empty, so <i>x</i><sub><i>t</i></sub> carries only the action and the task, and the two states have to supply everything else. <em>Fed back</em>: each predicted frame is passed in as if it were the real next frame, which is how a model without a state of its own, such as a teacher-forced Transformer, has to imagine. Unless we say &ldquo;fed back&rdquo;, the recurrent models imagine in their own state.</p>
     <figure class="chart">
       <div class="plot" id="fig-roll"></div>
       <figcaption>One evaluation window: the model sees 8 real frames, then imagines 24. Each box is one time step with its two states (blue <i>z</i><sub>L</sub>, red <i>z</i><sub>H</sub>); the square above it is the frame it receives, <i>a</i> the action, and the square below its prediction. In its own state, the model gets only the actions and relies on <i>z</i><sub>L</sub> and <i>z</i><sub>H</sub>. Fed back, each prediction is passed in as the next frame.</figcaption>
@@ -161,7 +165,7 @@
             <tr><td>Loss</td><td>next-frame latent MSE at every step, plus 0.1 &times; a reward-prediction MSE</td></tr>
             <tr><td>Optimizer</td><td>AIR's (AdamATan2, learning rate 1e-4 after 2,000 warmup iterations, weight decay 0.1); constant learning rate on cup-catch, cosine decay to 0.1&times; on the 18 tasks</td></tr>
             <tr><td>Not from AIR</td><td>gradient clipping at norm 5.0</td></tr>
-            <tr><td>State probe</td><td>ridge regression from the token-averaged state to the simulator state, at every 4th imagined frame; fit on half of the held-out episodes, scored on the other half</td></tr>
+            <tr><td>State probe</td><td>ridge regression from the token-averaged state to the simulator state (the dm_control observation: positions, then velocities), at every 4th imagined frame; fit on half of the held-out episodes, scored on the other half</td></tr>
             <tr><td>Tuning</td><td>none for accuracy beyond the update schedule (Section 5)</td></tr>
           </tbody>
         </table>
@@ -194,8 +198,26 @@
       <div class="plot" id="fig-r2"></div>
       <figcaption>R&sup2; of a linear probe that predicts the simulator's positions and velocities from the model's state while it imagines; for each seed, the better of <i>z</i><sub>L</sub> and <i>z</i><sub>H</sub>. Each dot is one seed. Dashed line: the same probe on a single real frame.</figcaption>
     </figure>
-    <p><strong>In our runs, air learned to remember only with backpropagation through time.</strong> With the one-step gradient, air stays close to the single-frame baseline (0.46 against 0.43): its state knows little more than one frame shows. With BPTT it reaches 0.80, and its error falls almost threefold, from 0.0342 to 0.0123. sym retains more than air with the one-step gradient (0.67) and also gains from BPTT (0.84). The 18-task models follow the same pattern: air reaches 0.60 with BPTT and 0.49 with the one-step gradient, sym 0.58 and 0.50, against 0.40 for a single frame.</p>
-    <p><strong>The further back the gradient reaches, the better the model remembers and predicts, up to the full 32-step window.</strong> We cut the gradient every <i>K</i> steps during training. With the (L,&nbsp;H) schedule, <i>K</i>&nbsp;=&nbsp;1 is exactly the one-step gradient, and <i>K</i>&nbsp;=&nbsp;32 is BPTT over the whole window. A reach of 4 steps recovers most of the memory, but the error keeps falling beyond that: at 8 steps it is still about 50% above full BPTT.</p>
+    <p><strong>In our runs, air learned to remember only with backpropagation through time.</strong> With the one-step gradient, air stays close to the single-frame baseline (0.46 against 0.43). With BPTT it reaches 0.80, and its error falls almost threefold, from 0.0342 to 0.0123. sym retains more than air with the one-step gradient (0.67) and also gains from BPTT (0.84). The 18-task models follow the same pattern: air reaches 0.60 with BPTT and 0.49 with the one-step gradient, sym 0.58 and 0.50, against 0.40 for a single frame.</p>
+    <p><strong>What the model has to remember is velocity, and that is where the two gradient rules differ.</strong> Cup-catch's simulator state has four position and four velocity dimensions. A single frame predicts the positions (R&sup2; 0.87) and none of the velocities (&minus;0.01). With BPTT, air's <i>z</i><sub>L</sub> predicts the velocities with an R&sup2; of 0.78; with the one-step gradient, 0.41. On the six of the 18 tasks whose state layout we checked, the pattern is the same but weaker: 0.04 from a single frame, 0.55 with the one-step gradient and 0.74 with BPTT, so there the one-step model does carry some velocity.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>State probe R&sup2; on cup-catch, while imagining</th><th class="num">positions</th><th class="num">velocities</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>a single real frame</td><td class="num">0.87</td><td class="num">&minus;0.01</td></tr>
+          <tr><td>air, one-step gradient, <i>z</i><sub>L</sub></td><td class="num">0.47</td><td class="num">0.41</td></tr>
+          <tr><td>air, one-step gradient, <i>z</i><sub>H</sub></td><td class="num">0.86</td><td class="num">0.03</td></tr>
+          <tr class="strong"><td>air, BPTT, <i>z</i><sub>L</sub></td><td class="num">0.82</td><td class="num">0.78</td></tr>
+          <tr class="strong"><td>air, BPTT, <i>z</i><sub>H</sub></td><td class="num">0.92</td><td class="num">0.30</td></tr>
+          <tr><td>sym, BPTT, <i>z</i><sub>L</sub></td><td class="num">0.91</td><td class="num">0.77</td></tr>
+          <tr><td>sym, BPTT, <i>z</i><sub>H</sub></td><td class="num">0.91</td><td class="num">0.78</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-note">The same probe as above, scored separately on the four position and the four velocity dimensions. Mean over 3 seeds.</p>
+    <p><strong>The further back the gradient reaches, the better the model remembers and predicts, up to the full 32-step window.</strong> We cut the gradient every <i>K</i> steps during training. With the (L,&nbsp;H) schedule, <i>K</i>&nbsp;=&nbsp;1 is exactly the one-step gradient, and <i>K</i>&nbsp;=&nbsp;32 is BPTT over the whole window. A reach of 4 steps recovers most of the memory, but the error keeps falling beyond that: at 8 steps it is still about 50% above full BPTT, and at 16 steps 17% above.</p>
     <div class="table-wrap">
       <table>
         <thead>
@@ -205,14 +227,14 @@
           <tr><td>1 step (one-step gradient)</td><td class="num">0.0342</td><td class="num">0.46</td></tr>
           <tr><td>4 steps</td><td class="num">0.0218</td><td class="num">0.70</td></tr>
           <tr><td>8 steps</td><td class="num">0.0183</td><td class="num">0.74</td></tr>
-          <tr><td>16 steps</td><td class="num"><span class="running">running</span></td><td class="num"><span class="running">running</span></td></tr>
+          <tr><td>16 steps</td><td class="num">0.0144</td><td class="num">0.77</td></tr>
           <tr class="strong"><td>32 steps (BPTT)</td><td class="num">0.0123</td><td class="num">0.80</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="table-note">Error and state R&sup2; as above. The 16-step runs are still training.</p>
+    <p class="table-note">Error as defined in Setup; state R&sup2; as in the figure above. Mean over 3 seeds.</p>
     <p><strong>With the (L,&nbsp;H) schedule, the longer reach is free.</strong> Both rules differentiate the same two updates at every time step; BPTT only stops detaching the states between steps. In our runs it took no more training time or GPU memory than the one-step gradient, so there is no reason to truncate. With AIR's six updates per step, where the one-step gradient skips four of the six, BPTT took about twice the time and three times the memory.</p>
-    <p><strong>On cup-catch, the memory sits in <i>z</i><sub>L</sub>.</strong> In air, the probe reads the physical state best from <i>z</i><sub>L</sub> (0.80) and less well from <i>z</i><sub>H</sub> (0.61), although only <i>z</i><sub>H</sub> yields the prediction. The two-network models show the same pattern (hrm_half: 0.83 and 0.68; hrm: 0.79 and 0.42), and sym does not (0.84 for both). This sharpens the roles from Section 1: <i>z</i><sub>L</sub> carries the physical state forward, and <i>z</i><sub>H</sub> holds what the next frame needs. It is not general, though. On the 18 tasks the two states of air score about the same (0.60 for <i>z</i><sub>L</sub>, 0.58 for <i>z</i><sub>H</sub>). And memory itself does not depend on the asymmetry: with BPTT, sym remembers at least as well as air.</p>
+    <p><strong>On cup-catch, the memory sits in <i>z</i><sub>L</sub>.</strong> In air with BPTT, <i>z</i><sub>H</sub> predicts the positions well (0.92) but the velocities poorly (0.30), while <i>z</i><sub>L</sub> predicts both (0.82 and 0.78), although only <i>z</i><sub>H</sub> yields the prediction. The two-network models show the same pattern, and sym does not: its two states score the same. This sharpens the roles from Section 1: <i>z</i><sub>H</sub> holds what the next frame shows, and <i>z</i><sub>L</sub> carries what it does not show. It is not general, though. On the 18 tasks the two states of air score about the same overall (0.60 for <i>z</i><sub>L</sub>, 0.58 for <i>z</i><sub>H</sub>). And memory itself does not depend on the asymmetry: with BPTT, sym remembers at least as well as air.</p>
     <figure class="chart">
       <div class="chart-title">The same probe on each state separately (BPTT)</div>
       <div class="chart-key"><span><i class="dot" style="background:#4f7fd6"></i><span class="k"><i>z</i><sub>L</sub></span></span><span><i class="dot" style="background:#df6f64"></i><span class="k"><i>z</i><sub>H</sub></span></span></div>
@@ -221,14 +243,21 @@
     </figure>
 
     <h2>3. Sending the frame only into L is also more accurate</h2>
-    <p><strong>All models in this section are trained with BPTT and imagine in their own state.</strong> The figure shows what air's imagined frames look like, and the table gives the error.</p>
+    <p><strong>All models in this section are trained with BPTT and imagine in their own state.</strong> The video shows what air's imagined frames look like, and the table gives the error.</p>
+    <figure>
+      <video class="roll-video roll-wide" loop muted playsinline controls preload="none" width="1200" height="488" poster="../../assets/img/posts/airwm/rollouts_air_wide_poster.jpg?v=20261122c" aria-label="Looping video. Six pairs of panels, for cup-catch, cartpole, pendulum, cheetah, finger and walker: the true frames on the left and air's imagined frames on the right. After the eight real frames air's ball, pole, pendulum, cheetah and finger stay sharp and follow the true motion closely; its walker keeps its shape while its pose drifts from the true one."><source src="../../assets/img/posts/airwm/rollouts_air_wide.mp4?v=20261122c" type="video/mp4"></video>
+      <video class="roll-video roll-narrow roll-slim" loop muted playsinline controls preload="none" width="384" height="888" poster="../../assets/img/posts/airwm/rollouts_air_narrow_poster.jpg?v=20261122c" aria-label="Looping video. Six pairs of panels, for cup-catch, cartpole, pendulum, cheetah, finger and walker: the true frames on the left and air's imagined frames on the right. After the eight real frames air's ball, pole, pendulum, cheetah and finger stay sharp and follow the true motion closely; its walker keeps its shape while its pose drifts from the true one."><source src="../../assets/img/posts/airwm/rollouts_air_narrow.mp4?v=20261122c" type="video/mp4"></video>
+      <figcaption>What air imagines in its own state: eight real frames, then 24 imagined ones, looping at 8 frames per second (click to pause). In each pair the true frames, as reconstructed by the tokenizer, are on the left and air's prediction on the right. Cup-catch is from the single-task model, the other tasks from the 18-task model (BPTT, seed 0). The predictions stay sharp; the pose drifts over the horizon, most for the walker. Sections 4 and 5 show the same six windows; I picked them for the comparison in Section 4.</figcaption>
+    </figure>
+    <details class="more"><summary>The same windows as still frames</summary>
     <figure>
       <div class="strip-scroll"><div class="strip">
         <div class="strip-head"><span class="strip-h0">frame</span><span>+1</span><span>+4</span><span>+7</span><span>+10</span><span>+13</span><span>+16</span><span>+19</span><span>+22</span></div>
-        <div class="strip-img"><img src="../../assets/img/posts/airwm/rollouts_main.jpg?v=20261118b" width="768" height="590" alt="Three pairs of frame rows: a ball-in-cup robot, a cart with a pole, and a walker. In each pair the true frames are on top and air's imagined frames below. The imagined ball and pole stay sharp and follow the true motion closely; the imagined walker keeps its shape while its pose drifts."><span class="strip-tag" style="top:8.14%"><b>cup-catch</b>true</span><span class="strip-tag" style="top:24.41%">air</span><span class="strip-tag" style="top:41.86%"><b>cartpole</b>true</span><span class="strip-tag" style="top:58.14%">air</span><span class="strip-tag" style="top:75.59%"><b>walker</b>true</span><span class="strip-tag" style="top:91.86%">air</span></div>
+        <div class="strip-img"><img src="../../assets/img/posts/airwm/rollouts_main.jpg?v=20261122c" width="1024" height="1596" loading="lazy" alt="Six pairs of frame rows, for cup-catch, cartpole, pendulum, cheetah, finger and walker. In each pair the true frames are on top and air's imagined frames below. The imagined objects stay sharp and follow the true motion closely; the imagined walker keeps its shape while its pose drifts."><span class="strip-tag" style="top:4.01%"><b>cup-catch</b>true</span><span class="strip-tag" style="top:12.03%">air</span><span class="strip-tag" style="top:20.80%"><b>cartpole-swingup-sparse</b>true</span><span class="strip-tag" style="top:28.82%">air</span><span class="strip-tag" style="top:37.59%"><b>pendulum-swingup</b>true</span><span class="strip-tag" style="top:45.61%">air</span><span class="strip-tag" style="top:54.39%"><b>cheetah-run</b>true</span><span class="strip-tag" style="top:62.41%">air</span><span class="strip-tag" style="top:71.18%"><b>finger-spin</b>true</span><span class="strip-tag" style="top:79.20%">air</span><span class="strip-tag" style="top:87.97%"><b>walker-walk</b>true</span><span class="strip-tag" style="top:95.99%">air</span></div>
       </div></div>
-      <figcaption>What air imagines in its own state after 8 real frames. In each pair, the first row shows the true frames, as reconstructed by the tokenizer, and the second row air's prediction; the numbers on top count imagined frames. Cup-catch is from the single-task model, cartpole and the walker from the 18-task model (BPTT, seed 0). The predictions stay sharp; over longer horizons the pose drifts, most for the walker.</figcaption>
+      <figcaption>Every third imagined frame of the six windows in the video; the numbers on top count imagined frames. In each pair, the first row shows the true frames and the second air's prediction.</figcaption>
     </figure>
+    </details>
     <div class="table-wrap">
       <table>
         <thead>
@@ -247,57 +276,67 @@
     <p><strong>Sending the frame only into L makes the model more accurate than sending it into both updates.</strong> air's error is 30% lower than sym's on cup-catch and 14% lower on the 18 tasks, where it is lower on every task.</p>
     <p><strong>Sharing the weights costs a little accuracy.</strong> hrm_half has the same number of parameters as air and uses half its compute per step, and its error is 12% lower on cup-catch and 7% lower on the 18 tasks, where it is ahead on 14 of the 18. More parameters do not help: hrm, whose two networks are each as large as air's one, is not more accurate than air (0.0136 against 0.0123 on cup-catch, 0.0349 against 0.0353 on the 18 tasks).</p>
 
-    <h2>4. The recurrent state overtakes a causal Transformer as the horizon grows</h2>
+    <h2>4. At half the parameters, the recurrent models keep up with a causal Transformer</h2>
     <p><strong>The baseline is a causal Transformer like the one we replaced.</strong> It follows Dreamer&nbsp;4's dynamics model: each frame is a block of tokens that attends to itself and to all earlier frames. It has 8 layers and twice air's parameters (27.3M), and it is trained on the same data for the same number of iterations to predict the next frame's tokens.</p>
-    <p><strong>Three things about this baseline matter for reading the comparison.</strong> First, it is trained with teacher forcing only: it always sees real frames and never practices imagining, whereas the recurrent models are trained to imagine (Setup). Second, we left out Dreamer&nbsp;4's noise objective (shortcut forcing), so the baseline predicts the next tokens directly, as our models do. Training on noised inputs is a standard way to make a model tolerate its own errors during a rollout, so the full Dreamer&nbsp;4 recipe would likely drift less than this baseline. Third, we did not tune it. The comparison is therefore between a recurrent state and a plain teacher-forced Transformer, not Dreamer&nbsp;4 itself.</p>
-    <p><strong>To compare like with like, both models imagine here by feeding their predictions back.</strong> The Transformer has no state of its own to imagine in, so each prediction goes back in as the next frame, and we run our models the same way. Neither model was trained on its own predictions.</p>
+    <p><strong>How the Transformer is trained to imagine decides the comparison, so we train it three ways.</strong> <em>Teacher forcing</em>: it always sees real frames and never practices imagining; to imagine, each prediction is fed back as the next frame. <em>Scheduled sampling</em>: after a random context of real frames, each input frame is replaced by the model's own one-step prediction of it, so the model practices on its own outputs; it also imagines fed back. <em>Context masking</em>: the protocol of the recurrent models. After a random context the Transformer receives a mask token in place of each frame, together with the actions, so it learns to imagine from the actions alone and feeds nothing back. None of the three uses Dreamer&nbsp;4's noise objective (shortcut forcing), and none is tuned.</p>
     <div class="table-wrap">
       <table>
         <thead>
           <tr><th>Error over 24 imagined frames</th><th class="num">cup-catch</th><th class="num">18 tasks</th></tr>
         </thead>
         <tbody>
-          <tr><td>Transformer, 27.3M (fed back)</td><td class="num">0.0394</td><td class="num">0.0801</td></tr>
-          <tr><td>Transformer, 13.6M (fed back)</td><td class="num">&ndash;</td><td class="num">0.1039</td></tr>
-          <tr class="strong"><td>air, 13.6M (fed back)</td><td class="num">0.0143</td><td class="num">0.0649</td></tr>
-          <tr><td>hrm_half, 13.6M (fed back)</td><td class="num">0.0119</td><td class="num">0.0499</td></tr>
-          <tr><td>air (own state)</td><td class="num">0.0123</td><td class="num">0.0353</td></tr>
+          <tr><td>Transformer, teacher forcing (fed back)</td><td class="num">0.0394</td><td class="num">0.0801</td></tr>
+          <tr><td>Transformer, scheduled sampling (fed back)</td><td class="num"><span class="running">running</span></td><td class="num">0.0525</td></tr>
+          <tr><td>Transformer, context masking (fed back)</td><td class="num">0.0191</td><td class="num">0.0579</td></tr>
+          <tr><td>Transformer, context masking (actions only)</td><td class="num">0.0148</td><td class="num">0.0367</td></tr>
+          <tr class="strong"><td>air (own state)</td><td class="num">0.0123</td><td class="num">0.0353</td></tr>
+          <tr><td>air (fed back)</td><td class="num">0.0143</td><td class="num">0.0649</td></tr>
+          <tr><td>hrm_half (own state)</td><td class="num">0.0108</td><td class="num">0.0329</td></tr>
+          <tr><td>hrm_half (fed back)</td><td class="num">0.0119</td><td class="num">0.0499</td></tr>
           <tr><td>repeat the last frame</td><td class="num">0.236</td><td class="num">0.165</td></tr>
         </tbody>
       </table>
     </div>
+    <p class="table-note">Error as defined in Setup. The Transformers have 27.3M parameters, air and hrm_half 13.6M. &ldquo;Own state&rdquo; and &ldquo;actions only&rdquo; both imagine without frames; &ldquo;fed back&rdquo; passes each prediction in as the next frame. A 13.6M Transformer was only trained with teacher forcing (0.1039 on the 18 tasks).</p>
     <figure class="chart">
       <div class="chart-title">Error at each imagined frame</div>
-      <div class="chart-key"><span><i class="ln" style="color:#4f7fd6"></i><span class="k">air (fed back)</span></span><span><i class="ln dash" style="color:#4f7fd6"></i><span class="k">air (own state)</span></span><span><i class="ln" style="color:#1baf7a"></i><span class="k">hrm_half (fed back)</span></span><span><i class="ln" style="color:#807c75"></i><span class="k">sym (fed back)</span></span><span><i class="ln" style="color:#eb6834"></i><span class="k">Transformer</span></span></div>
+      <div class="chart-key"><span><i class="ln" style="color:#eb6834"></i><span class="k">Transformer, teacher forcing</span></span><span><i class="ln" style="color:#a8501a"></i><span class="k">Transformer, scheduled sampling</span></span><span><i class="ln dash" style="color:#eb6834"></i><span class="k">Transformer, context masking</span></span><span><i class="ln" style="color:#4f7fd6"></i><span class="k">air</span></span><span><i class="ln dash" style="color:#1baf7a"></i><span class="k">hrm_half</span></span></div>
       <div class="lp-panels">
         <div class="lp-panel"><div class="lp-sub">cup-catch</div><div class="plot lp" id="fig-horizon-cc"></div></div>
         <div class="lp-panel lp-wide"><div class="lp-sub">18 tasks</div><div class="plot lp" id="fig-horizon"></div></div>
       </div>
-      <figcaption>Error at each of the 24 imagined frames. Solid lines: predictions fed back as the next input. Dashed: air in its own state. The two panels have different vertical scales. Hover or tap for values.</figcaption>
+      <figcaption>Error at each of the 24 imagined frames. Solid lines: predictions fed back as the next input. Dashed lines: imagining without frames (the recurrent models in their own state, the context-masked Transformer from the actions alone). The two panels have different vertical scales. Hover or tap for values.</figcaption>
     </figure>
-    <p><strong>On cup-catch, air is more accurate than the Transformer at every imagined frame.</strong> Over all 24 frames its error is 64% lower, with every air seed ahead of every Transformer seed, and by the 24th frame the Transformer's error is more than three times air's.</p>
-    <p><strong>On the 18 tasks, the Transformer is more accurate for the first 11 frames, and air after that and over all 24.</strong> The Transformer's first-frame error is about a third of air's, but by the 24th frame it is 50% higher. Over all 24 frames air's error is 19% lower, with every air seed ahead of every Transformer seed. hrm_half is ahead of the Transformer from the 9th frame, and its error over all 24 frames is 38% lower.</p>
+    <p><strong>Against the teacher-forced Transformer, the recurrent models are far ahead at long horizons.</strong> On cup-catch, air fed back is more accurate at every imagined frame, and its error over all 24 is 64% lower. On the 18 tasks that Transformer is more accurate for the first 11 frames, but by the 24th its error is 50% higher than air's, and over all 24 frames air's is 19% lower.</p>
+    <figure>
+      <video class="roll-video roll-wide" loop muted playsinline controls preload="none" width="1176" height="688" poster="../../assets/img/posts/airwm/rollouts_wide_poster.jpg?v=20261122c" aria-label="Looping video. Six groups of three panels, for cup-catch, cartpole, pendulum, cheetah, finger and walker: the true frames, air's imagined frames, and the teacher-forced Transformer's. After the eight real frames, the Transformer's ball leaves its string, its pole and pendulum break into pieces, and its cheetah and walker dissolve; air's objects stay in one piece, and its walker's pose drifts from the true one."><source src="../../assets/img/posts/airwm/rollouts_wide.mp4?v=20261122c" type="video/mp4"></video>
+      <video class="roll-video roll-narrow" loop muted playsinline controls preload="none" width="576" height="888" poster="../../assets/img/posts/airwm/rollouts_narrow_poster.jpg?v=20261122c" aria-label="Looping video. Six groups of three panels, for cup-catch, cartpole, pendulum, cheetah, finger and walker: the true frames, air's imagined frames, and the teacher-forced Transformer's. After the eight real frames, the Transformer's ball leaves its string, its pole and pendulum break into pieces, and its cheetah and walker dissolve; air's objects stay in one piece, and its walker's pose drifts from the true one."><source src="../../assets/img/posts/airwm/rollouts_narrow.mp4?v=20261122c" type="video/mp4"></video>
+      <figcaption>The same six windows as in Section 3, with the teacher-forced Transformer added. In each group: the true frames, air imagining in its own state, and the teacher-forced Transformer with its predictions fed back (seed 0 each; cup-catch from the single-task models, the other tasks from the 18-task models). I picked windows where the teacher-forced Transformer's failure is easy to see: its objects double, break up or dissolve, while air's stay in one piece. On walker-walk air's pose drifts from the true one as well. The Transformers trained to imagine are not in this video.</figcaption>
+    </figure>
+    <details class="more"><summary>The same windows as still frames</summary>
     <figure>
       <div class="strip-scroll"><div class="strip">
         <div class="strip-head"><span class="strip-h0">frame</span><span>+1</span><span>+4</span><span>+7</span><span>+10</span><span>+13</span><span>+16</span><span>+19</span><span>+22</span></div>
-        <div class="strip-img"><img src="../../assets/img/posts/airwm/rollouts_tf.jpg?v=20261120" width="768" height="878" alt="Three groups of three frame rows: a ball-in-cup robot, a cart with a pole, and a walker. In each group: the true frames, air's imagined frames, and the Transformer's. In the Transformer's rows the ball doubles and flies off, the pole breaks into fragments, and the walker's torso disappears in the later frames; air's stay intact."><span class="strip-tag" style="top:5.47%"><b>cup-catch</b>true</span><span class="strip-tag" style="top:16.40%">air</span><span class="strip-tag" style="top:27.33%">Transformer</span><span class="strip-tag" style="top:39.07%"><b>cartpole</b>true</span><span class="strip-tag" style="top:50.00%">air</span><span class="strip-tag" style="top:60.93%">Transformer</span><span class="strip-tag" style="top:72.67%"><b>walker</b>true</span><span class="strip-tag" style="top:83.60%">air</span><span class="strip-tag" style="top:94.53%">Transformer</span></div>
+        <div class="strip-img"><img src="../../assets/img/posts/airwm/rollouts_tf.jpg?v=20261122c" width="1024" height="2364" loading="lazy" alt="Six groups of three frame rows, for cup-catch, cartpole, pendulum, cheetah, finger and walker. In each group: the true frames, air's imagined frames, and the teacher-forced Transformer's. In the Transformer's rows the ball leaves its string, the pole and pendulum break into pieces, and the cheetah and walker dissolve in the later frames; air's stay intact."><span class="strip-tag" style="top:2.71%"><b>cup-catch</b>true</span><span class="strip-tag" style="top:8.12%">air</span><span class="strip-tag" style="top:13.54%">Transformer</span><span class="strip-tag" style="top:19.46%"><b>cartpole-swingup-sparse</b>true</span><span class="strip-tag" style="top:24.87%">air</span><span class="strip-tag" style="top:30.29%">Transformer</span><span class="strip-tag" style="top:36.21%"><b>pendulum-swingup</b>true</span><span class="strip-tag" style="top:41.62%">air</span><span class="strip-tag" style="top:47.04%">Transformer</span><span class="strip-tag" style="top:52.96%"><b>cheetah-run</b>true</span><span class="strip-tag" style="top:58.38%">air</span><span class="strip-tag" style="top:63.79%">Transformer</span><span class="strip-tag" style="top:69.71%"><b>finger-spin</b>true</span><span class="strip-tag" style="top:75.13%">air</span><span class="strip-tag" style="top:80.54%">Transformer</span><span class="strip-tag" style="top:86.46%"><b>walker-walk</b>true</span><span class="strip-tag" style="top:91.88%">air</span><span class="strip-tag" style="top:97.29%">Transformer</span></div>
       </div></div>
-      <figcaption>The same three windows as in Section 3. In each group: the true frames, air imagining in its own state, and the Transformer with its predictions fed back (seed 0 each). In the later frames the Transformer's ball doubles and leaves the string, its pole breaks up, and its walker loses its torso; air's objects stay in one piece and drift.</figcaption>
+      <figcaption>Every third imagined frame of the six windows in the video. In each group: the true frames, air imagining in its own state, and the teacher-forced Transformer with its predictions fed back.</figcaption>
     </figure>
-    <p><strong>Which model wins depends on the task.</strong> Fed back, air is ahead on 13 of the 18 tasks. The Transformer is about twice as good on the two reacher tasks and about 20% better on three of the four cartpole tasks, but about four times worse on cheetah and seven times worse on pendulum.</p>
+    </details>
+    <p><strong>Most of that gap came from teacher forcing, not from the architecture.</strong> Trained to imagine, the Transformer's error over 24 frames on the 18 tasks falls from 0.0801 to 0.0525 with scheduled sampling and to 0.0367 with context masking; on cup-catch it falls from 0.0394 to 0.0148.</p>
+    <p><strong>When each model imagines the way it was trained, the recurrent models are level with or ahead of the Transformer on average, at half its parameters.</strong> Against the context-masked Transformer, air's error is 17% lower on cup-catch and 4% lower on the 18 tasks; hrm_half's is 27% and 10% lower.</p>
+    <p><strong>Task by task, however, the Transformer is ahead of air more often.</strong> air is ahead on 7 of the 18 tasks, the ones with the largest errors: the walker, hopper and cheetah tasks and finger-spin, by 9&ndash;18%. The Transformer is ahead on the other 11, by two to five times on reacher, pendulum, cartpole and acrobot. hrm_half is ahead on 9 of the 18. The average favours the recurrent models because the high-error tasks dominate it.</p>
     <figure class="chart">
-      <div class="chart-title">air's error divided by the Transformer's, per task</div>
-      <div class="chart-key"><span><i class="dot" style="background:#4f7fd6"></i><span class="k">both fed back</span></span><span><i class="dot hollow" style="border-color:#4f7fd6"></i><span class="k">air in its own state</span></span><span class="key-side">&larr; air better</span><span class="key-side">Transformer better &rarr;</span></div>
+      <div class="chart-title">Recurrent models' error divided by the Transformer's, per task</div>
+      <div class="chart-key"><span><i class="dot" style="background:#4f7fd6"></i><span class="k">air</span></span><span><i class="dot hollow" style="border-color:#1baf7a"></i><span class="k">hrm_half</span></span><span class="key-side">&larr; recurrent model better</span><span class="key-side">Transformer better &rarr;</span></div>
       <div class="plot" id="fig-vs"></div>
-      <figcaption>air's error divided by the Transformer's over the 24 imagined frames, per task; below 1, air is more accurate. Solid: both fed back; the number on the right is this ratio. Hollow: air in its own state. Means over 3 seeds. Log scale.</figcaption>
+      <figcaption>Error in the model's own state divided by the error of the context-masked Transformer imagining from the actions alone, over the 24 imagined frames, per task; below 1, the recurrent model is more accurate. The number on the right is air's ratio. Means over 3 seeds. Log scale.</figcaption>
     </figure>
-    <p><strong>A smaller Transformer does worse.</strong> With air's parameter count (4 layers, 13.6M), the Transformer still starts lower than air, at 0.0029 against 0.0062 on the first frame, but it falls behind from the 8th frame, and its error over all 24 frames is 60% above air's.</p>
-    <p><strong>Imagining in its own state, rather than from its own predicted frames, reduces air's error further.</strong> On cup-catch the difference is small. On the 18 tasks it is large: in its own state, air is ahead of the Transformer from the 7th frame, its error over all 24 frames is less than half the Transformer's, and it is ahead on all 18 tasks.</p>
-    <p><strong>Beyond 24 frames, the Transformer falls further behind.</strong> Evaluated over 56 imagined frames on the 18 tasks, the Transformer's error is about 50% above air's at the 24th frame and about twice air's at the 40th and the 56th. From the 28th frame on, the Transformer is worse than predicting that nothing moves. None of the recurrent models crosses that line within 56 frames, and air imagining in its own state is still at a third of it at the 56th.</p>
+    <p><strong>With predictions fed back, the Transformer trained with scheduled sampling is more accurate than air.</strong> On the 18 tasks its error is 19% lower than air's (0.0525 against 0.0649) and lower at every frame; hrm_half fed back (0.0499) is 5% below it. Feeding predictions back is not how the recurrent models are meant to imagine, though: in its own state, air's error is 0.0353.</p>
+    <p><strong>Beyond 24 frames, the teacher-forced Transformer falls further behind.</strong> Evaluated over 56 imagined frames on the 18 tasks, its error is about 50% above air's at the 24th frame and about twice air's at the 40th and the 56th. From the 28th frame on, it is worse than predicting that nothing moves. None of the recurrent models crosses that line within 56 frames, and air imagining in its own state is still at a third of it at the 56th. The Transformers trained to imagine have not been evaluated beyond 24 frames yet.</p>
     <figure class="chart">
       <div class="chart-title">Error over 56 imagined frames, 18 tasks</div>
       <div class="plot lp" id="fig-h56"></div>
-      <figcaption>The same comparison over 56 imagined frames (a separate evaluation, so values at frame 24 differ slightly from the figure above). Dashed grey: predicting that nothing moves. Hover or tap for values.</figcaption>
+      <figcaption>The teacher-forced Transformer and the recurrent models over 56 imagined frames (a separate evaluation, so values at frame 24 differ slightly from the figure above). Dashed grey: predicting that nothing moves. Hover or tap for values.</figcaption>
     </figure>
 
     <h2>5. One update of each state per time step beats AIR's six</h2>
@@ -330,8 +369,8 @@
       </div>
     </details>
     <p><strong>(L,&nbsp;H) is more accurate for every variant, by 17% to 55%, at a third of the compute per step.</strong> Training is also more consistent: on the 18 tasks air's three seeds span 0.0007, against 0.0067 with six updates. Even with the one-step gradient, air with (L,&nbsp;H) is more accurate than air with six updates and BPTT (0.0459 against 0.0517 on the 18 tasks).</p>
-    <p><strong>The findings of Sections 1 to 4 hold under both schedules, except for two comparisons.</strong> With six updates, air also specializes (a readout ratio of 255 on cup-catch and 90 pooled over the 18 tasks, against about 500 and 196 with (L,&nbsp;H)), also needs BPTT to remember, and is also more accurate than sym. What changes is how air compares with the other architectures on the 18 tasks. With six updates, hrm_half is 23% more accurate than air; with (L,&nbsp;H), 7%. And with six updates, the Transformer is 12% more accurate than air over 24 frames fed back; with (L,&nbsp;H), air is 19% more accurate.</p>
-    <p><strong>Which part of the six-update schedule hurts is not yet clear.</strong> The extra updates lengthen the path the gradient travels (768 layers over 32 steps instead of 256), overwrite the states more often, and inject the frame more often. Halving the depth of the network while keeping six updates does not help (0.0495 on the 18 tasks). The schedules in between should separate these explanations:</p>
+    <p><strong>The findings of Sections 1 to 4 hold under both schedules, except for two comparisons.</strong> With six updates, air also specializes (a readout ratio of 255 on cup-catch and 90 pooled over the 18 tasks, against about 500 and 196 with (L,&nbsp;H)), also needs BPTT to remember, and is also more accurate than sym. What changes is how air compares with the other architectures on the 18 tasks. With six updates, hrm_half is 23% more accurate than air; with (L,&nbsp;H), 7%. And with six updates, the teacher-forced Transformer is 12% more accurate than air over 24 frames fed back; with (L,&nbsp;H), air is 19% more accurate.</p>
+    <p><strong>What hurts is a second L&ndash;H cycle within a step, not the number of updates.</strong> AIR's schedule runs the cycle (L,&nbsp;L,&nbsp;H) twice per step. A second L-update inside one cycle costs little: (L,&nbsp;L,&nbsp;H) is 7% above (L,&nbsp;H). Repeating the cycle costs about 50%: (L,&nbsp;H,&nbsp;L,&nbsp;H) reaches 0.0528 with four updates, close to AIR's 0.0517 with six, and a third cycle is slightly worse again (0.0561). The length of the gradient path does not explain this: (L,&nbsp;L,&nbsp;H) has a longer path than (L,&nbsp;H) and loses little, and the two six-update schedules have the same path length but differ. Halving the depth of the network under AIR's schedule does not help either (0.0495 on the 18 tasks). The specialization also weakens with every added cycle (a readout ratio of 196, 145 and 110 for one, two and three cycles). Why a second H-update per frame hurts is open.</p>
     <div class="table-wrap">
       <table>
         <thead>
@@ -340,45 +379,52 @@
         <tbody>
           <tr class="strong"><td>L, H</td><td class="num">2</td><td class="num">0.0353</td></tr>
           <tr><td>L, L, H</td><td class="num">3</td><td class="num">0.0378&Dagger;</td></tr>
-          <tr><td>L, H, L, H</td><td class="num">4</td><td class="num"><span class="running">running</span></td></tr>
-          <tr><td>L, H, L, H, L, H</td><td class="num">6</td><td class="num"><span class="running">running</span></td></tr>
+          <tr><td>L, H, L, H</td><td class="num">4</td><td class="num">0.0528&Dagger;</td></tr>
+          <tr><td>L, H, L, H, L, H</td><td class="num">6</td><td class="num">0.0561&Dagger;</td></tr>
           <tr><td>L, L, H, L, L, H (AIR)</td><td class="num">6</td><td class="num">0.0517</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="table-note">&Dagger; two seeds. A second L-update per step already raises the error by 7%; the other two schedules are still training.</p>
+    <p class="table-note">Error as defined in Setup. Mean over 3 seeds; &Dagger; two seeds.</p>
+    <figure>
+      <video class="roll-video roll-wide" loop muted playsinline controls preload="none" width="1176" height="688" poster="../../assets/img/posts/airwm/rollouts_sched_wide_poster.jpg?v=20261122c" aria-label="Looping video. Six groups of three panels, for cup-catch, cartpole, pendulum, cheetah, finger and walker: the true frames, air with six updates per frame, and air with the (L, H) schedule. With six updates the walker blurs during the imagined frames; with (L, H) it keeps its shape. On the other five windows the two look alike."><source src="../../assets/img/posts/airwm/rollouts_sched_wide.mp4?v=20261122c" type="video/mp4"></video>
+      <video class="roll-video roll-narrow" loop muted playsinline controls preload="none" width="576" height="888" poster="../../assets/img/posts/airwm/rollouts_sched_narrow_poster.jpg?v=20261122c" aria-label="Looping video. Six groups of three panels, for cup-catch, cartpole, pendulum, cheetah, finger and walker: the true frames, air with six updates per frame, and air with the (L, H) schedule. With six updates the walker blurs during the imagined frames; with (L, H) it keeps its shape. On the other five windows the two look alike."><source src="../../assets/img/posts/airwm/rollouts_sched_narrow.mp4?v=20261122c" type="video/mp4"></video>
+      <figcaption>The same six windows under two update schedules. In each group: the true frames, air with AIR's six updates per frame, and air with (L,&nbsp;H); both imagine in their own state (seed 0 each; cup-catch from the single-task models, the other tasks from the 18-task models). With six updates the walker blurs within the 24 imagined frames; with (L,&nbsp;H) it keeps its shape. On the other five windows the two schedules look alike, and the difference is in the error above.</figcaption>
+    </figure>
+    <details class="more"><summary>The same windows as still frames</summary>
     <figure>
       <div class="strip-scroll"><div class="strip">
         <div class="strip-head"><span class="strip-h0">frame</span><span>+1</span><span>+4</span><span>+7</span><span>+10</span><span>+13</span><span>+16</span><span>+19</span><span>+22</span></div>
-        <div class="strip-img"><img src="../../assets/img/posts/airwm/rollouts_schedule.jpg?v=20261118" width="768" height="583" alt="Two groups of three frame rows from the 18-task models: a cart with a pole, and a walker. In each group: the true frames, air with six updates per step, and air with the (L, H) schedule. With six updates the pole and the limbs blur after about ten imagined frames; with (L, H) they stay sharp."><span class="strip-tag" style="top:8.23%"><b>cartpole</b>true</span><span class="strip-tag" style="top:24.70%">six updates</span><span class="strip-tag" style="top:41.17%">(L,&nbsp;H)</span><span class="strip-tag" style="top:58.83%"><b>walker</b>true</span><span class="strip-tag" style="top:75.30%">six updates</span><span class="strip-tag" style="top:91.77%">(L,&nbsp;H)</span></div>
+        <div class="strip-img"><img src="../../assets/img/posts/airwm/rollouts_schedule.jpg?v=20261122c" width="1024" height="2364" loading="lazy" alt="Six groups of three frame rows, for cup-catch, cartpole, pendulum, cheetah, finger and walker. In each group: the true frames, air with six updates per frame, and air with the (L, H) schedule. With six updates the walker blurs in the later frames; with (L, H) it keeps its shape."><span class="strip-tag" style="top:2.71%"><b>cup-catch</b>true</span><span class="strip-tag" style="top:8.12%">six updates</span><span class="strip-tag" style="top:13.54%">(L,&nbsp;H)</span><span class="strip-tag" style="top:19.46%"><b>cartpole-swingup-sparse</b>true</span><span class="strip-tag" style="top:24.87%">six updates</span><span class="strip-tag" style="top:30.29%">(L,&nbsp;H)</span><span class="strip-tag" style="top:36.21%"><b>pendulum-swingup</b>true</span><span class="strip-tag" style="top:41.62%">six updates</span><span class="strip-tag" style="top:47.04%">(L,&nbsp;H)</span><span class="strip-tag" style="top:52.96%"><b>cheetah-run</b>true</span><span class="strip-tag" style="top:58.38%">six updates</span><span class="strip-tag" style="top:63.79%">(L,&nbsp;H)</span><span class="strip-tag" style="top:69.71%"><b>finger-spin</b>true</span><span class="strip-tag" style="top:75.13%">six updates</span><span class="strip-tag" style="top:80.54%">(L,&nbsp;H)</span><span class="strip-tag" style="top:86.46%"><b>walker-walk</b>true</span><span class="strip-tag" style="top:91.88%">six updates</span><span class="strip-tag" style="top:97.29%">(L,&nbsp;H)</span></div>
       </div></div>
-      <figcaption>The same windows as in Section 3, for the 18-task models. With six updates, the prediction blurs where parts move fast (the pole from about the 10th imagined frame); with (L,&nbsp;H) it stays sharp and the walker keeps its shape.</figcaption>
+      <figcaption>Every third imagined frame of the six windows in the video. In each group: the true frames, six updates per frame, and (L,&nbsp;H).</figcaption>
     </figure>
+    </details>
 
     <h2>What it means</h2>
     <ul>
       <li><strong>Where the input enters decides the roles, in a world model as on puzzles.</strong> The split survives continuous dynamics, frames that change at every step, hidden velocities, and imagination. It does not need separate weights, and it holds under both update schedules. Here <i>z</i><sub>H</sub> holds the next frame in the form the head reads; <i>z</i><sub>L</sub> takes in the frame and, on the single task, carries the physical state.</li>
       <li><strong>How the gradient flows decides what gets remembered.</strong> <a href="https://arxiv.org/abs/2506.21734" target="_blank" rel="noopener noreferrer">HRM</a>, <a href="https://arxiv.org/abs/2510.04871" target="_blank" rel="noopener noreferrer">TRM</a> and <a href="https://arxiv.org/abs/2605.17811" target="_blank" rel="noopener noreferrer">AIR</a> all cut the gradient between supervision steps, which keeps training inexpensive and is sufficient when the input never changes. A model that has to carry information from one step to the next needs a gradient that crosses steps too, and it has to reach far: cutting it every 8 steps instead of 32 leaves the error about 50% higher.</li>
-      <li><strong>The repeated updates that help reasoning hurt prediction.</strong> On puzzles, where the input is fixed, repeated updates within a step add reasoning depth. Here a new frame arrives at every step, and AIR's six updates cost accuracy as well as compute, for every architecture we tried. Why is open.</li>
-      <li><strong>A fixed-size recurrent state can stand in for attention over past frames, and it gets better by comparison as the horizon grows.</strong> At half the parameters, air is ahead of a teacher-forced Transformer at every imagined frame on a single task; on the 18 tasks it is behind for the first 11 frames and ahead after that, by more when it imagines in its own state. Whether this holds against a Transformer trained with Dreamer&nbsp;4's full objective is untested.</li>
+      <li><strong>The repeated updates that help reasoning hurt prediction.</strong> On puzzles, where the input is fixed, repeated updates within a step add reasoning depth. Here a new frame arrives at every step, and AIR's six updates cost accuracy as well as compute, for every architecture we tried. The damage comes from repeating the L&ndash;H cycle within a step: one extra L-update is nearly free, and a second cycle costs about 50%. Why is open.</li>
+      <li><strong>A fixed-size recurrent state can stand in for attention over past frames, but whether a model is trained to imagine matters more than which of the two it is.</strong> A Transformer trained only with teacher forcing falls far behind over 24 frames. Trained to imagine, a Transformer with twice air's parameters is about level with air on average error and ahead on most tasks. Whether Dreamer&nbsp;4's noise objective changes this is untested.</li>
       <li><strong>Sharing the weights costs a little accuracy.</strong> Two half-size networks are 7&ndash;12% more accurate than one shared network with the same number of parameters, although both specialize equally.</li>
     </ul>
 
     <h2>Limitations</h2>
     <ul>
       <li><strong>Accuracy here is error in the latent space of a frozen tokenizer.</strong> We have not yet used the model for planning or to train a policy, which is what a world model is for.</li>
-      <li><strong>The Transformer baseline is a plain one.</strong> It is teacher-forced, untuned, and trained without Dreamer&nbsp;4's noise objective (Section 4).</li>
+      <li><strong>The Transformer baselines are plain ones.</strong> They are untuned and trained without Dreamer&nbsp;4's noise objective, and we have not yet trained one of air's size to imagine (Section 4).</li>
       <li><strong>The data are simulated.</strong> All tasks are DeepMind Control tasks, with episodes collected by trained agents.</li>
-      <li><strong>The models are small and the seeds few.</strong> air has 13.6M parameters; most numbers are means over 3 seeds, a few over 1 or 2 (marked), and some runs are still training.</li>
+      <li><strong>The models are small and the seeds few.</strong> air has 13.6M parameters; most numbers are means over 3 seeds, a few over 1 or 2 (marked), and one set of runs is still training.</li>
       <li><strong>The best models depart from AIR in two ways.</strong> They keep AIR's architecture and optimizer, but not its one-step gradient or its six-update schedule.</li>
       <li><strong>The readout ratio depends on a head trained only on <i>z</i><sub>H</sub>.</strong> It shows that the states differ, not what each one computes; the state probe in Section 2 is a first step beyond it.</li>
     </ul>
 
     <h2>Next steps</h2>
     <ul>
-      <li>Find out why six updates per step are worse than two, starting with the schedules in between (Section 5).</li>
+      <li>Find out why a second L&ndash;H cycle within a step hurts (Section 5).</li>
       <li>Train with windows longer than 32 steps, since accuracy still improves as the gradient reaches further.</li>
-      <li>Compare against a Transformer that is trained to imagine, with scheduled sampling and with Dreamer&nbsp;4's noise objective.</li>
+      <li>Train the Transformer baseline with Dreamer&nbsp;4's noise objective, train one of air's size to imagine, and compare both families beyond the 32-step training window.</li>
       <li>Put the model to use the way world models are meant to be used: for planning, or for training a policy inside it.</li>
     </ul>
 
@@ -592,17 +638,13 @@
       })
     });
 
-    // air's error / the Transformer's, per task, 24 imagined frames, 3-seed means: [task, fed back, own state]
-    var VS = [["pendulum-swingup", 0.152, 0.033], ["cheetah-run", 0.264, 0.125], ["cup-catch", 0.521, 0.386], ["acrobot-swingup", 0.57, 0.143],
-      ["hopper-stand", 0.68, 0.388], ["finger-spin", 0.752, 0.433], ["cartpole-swingup-sparse", 0.791, 0.2], ["hopper-hop", 0.911, 0.485],
-      ["walker-walk", 0.921, 0.594], ["finger-turn-easy", 0.929, 0.483], ["walker-stand", 0.94, 0.611], ["finger-turn-hard", 0.961, 0.519],
-      ["walker-run", 0.972, 0.635], ["cartpole-swingup", 1.194, 0.284], ["cartpole-balance", 1.235, 0.35],
-      ["cartpole-balance-sparse", 1.27, 0.41], ["reacher-easy", 1.828, 0.882], ["reacher-hard", 2.129, 0.905]];
+    // error in the model's own state / the context-masked Transformer's (actions only), per task: [task, air, hrm_half]
+    var VS = [["walker-stand", 0.825, 0.858], ["walker-run", 0.832, 0.865], ["finger-spin", 0.838, 0.828], ["walker-walk", 0.853, 0.885], ["hopper-stand", 0.858, 0.864], ["hopper-hop", 0.888, 0.881], ["cheetah-run", 0.907, 0.776], ["finger-turn-hard", 1.142, 0.895], ["finger-turn-easy", 1.278, 1.007], ["cup-catch", 1.395, 0.988], ["cartpole-swingup-sparse", 1.943, 1.194], ["acrobot-swingup", 2.416, 1.302], ["cartpole-swingup", 2.54, 1.29], ["cartpole-balance-sparse", 2.566, 1.257], ["cartpole-balance", 3.009, 1.431], ["pendulum-swingup", 3.51, 1.076], ["reacher-easy", 4.411, 2.395], ["reacher-hard", 5.366, 2.756]];
     dotplot("fig-vs", {
-      log: true, domain: [0.028, 2.6], ticks: [0.05, 0.1, 0.2, 0.5, 1, 2], ticksNarrow: [0.1, 1], tick: function (k) { return String(k); }, fmt: f2,
-      rowH: 22, ref: 1, refLabel: "tie", refLabelBottom: true, sides: ["← air better", "Transformer better →"],
+      log: true, domain: [0.62, 6.6], ticks: [0.75, 1, 2, 5], ticksNarrow: [1, 5], tick: function (k) { return String(k); }, fmt: f2,
+      rowH: 22, ref: 1, refLabel: "tie", refLabelBottom: true, sides: ["← recurrent model better", "Transformer better →"],
       rows: VS.map(function (r) {
-        return { label: r[0], mean: r[1], series: [{ name: "air in its own state", vals: [r[2]], color: C.L, hollow: true }, { name: "both fed back", vals: [r[1]], color: C.L }] };
+        return { label: r[0], mean: r[1], series: [{ name: "hrm_half", vals: [r[2]], color: "#1baf7a", hollow: true }, { name: "air", vals: [r[1]], color: C.L }] };
       })
     });
 
@@ -672,25 +714,25 @@
 
     // per-frame error, mean over 3 seeds, (L, H) schedule, from eval/metrics.json
     lineplot("fig-horizon", {
-      ymax: 0.2, yticks: [0, 0.05, 0.1, 0.15, 0.2], xticks: [1, 6, 12, 18, 24],
-      marks: [{ x: 11, y: 0.0615, tx: 1.6, ty: 0.168, lx: 7, anchor: "start", text: "air ahead from frame 12" }],
+      ymax: 0.2, yticks: [0, 0.05, 0.1, 0.15, 0.2], xticks: [1, 6, 12, 18, 24], mr: 128,
       series: [
-        { label: "Transformer", color: "#eb6834", vals: [0.0023, 0.0051, 0.0086, 0.0124, 0.0171, 0.0227, 0.0293, 0.0361, 0.0439, 0.0524, 0.0615, 0.0713, 0.0813, 0.0917, 0.1019, 0.1119, 0.1209, 0.1297, 0.1376, 0.1447, 0.1515, 0.1576, 0.1632, 0.1685] },
-        { label: "sym (fed back)", color: C.other, vals: [0.0072, 0.0138, 0.0208, 0.0278, 0.035, 0.0423, 0.0497, 0.0564, 0.0629, 0.0686, 0.0743, 0.0799, 0.0849, 0.0898, 0.0945, 0.0989, 0.103, 0.1072, 0.1108, 0.1144, 0.1179, 0.121, 0.1238, 0.1269] },
+        { label: "Tr. teacher-forced", color: "#eb6834", vals: [0.0023, 0.0051, 0.0086, 0.0124, 0.0171, 0.0227, 0.0293, 0.0361, 0.0439, 0.0524, 0.0615, 0.0713, 0.0813, 0.0917, 0.1019, 0.1119, 0.1209, 0.1297, 0.1376, 0.1447, 0.1515, 0.1576, 0.1632, 0.1685] },
+        { label: "Tr. sched. sampling", color: "#a8501a", vals: [0.0024, 0.0048, 0.0079, 0.0111, 0.0148, 0.0189, 0.0232, 0.0278, 0.0326, 0.0374, 0.0423, 0.0471, 0.0523, 0.058, 0.0636, 0.0696, 0.0755, 0.081, 0.0861, 0.0911, 0.096, 0.1009, 0.1052, 0.1091] },
+        { label: "Tr. masked", color: "#eb6834", dash: true, vals: [0.0039, 0.0099, 0.0142, 0.0181, 0.0219, 0.0255, 0.0289, 0.032, 0.0347, 0.0368, 0.0387, 0.0404, 0.0415, 0.0426, 0.0439, 0.0454, 0.0466, 0.0478, 0.0491, 0.0503, 0.0512, 0.0519, 0.0526, 0.0535] },
         { label: "air (fed back)", color: C.L, vals: [0.0062, 0.0111, 0.0168, 0.0224, 0.0283, 0.0344, 0.0405, 0.0462, 0.0516, 0.0567, 0.0615, 0.0663, 0.071, 0.0756, 0.0798, 0.0841, 0.0883, 0.0924, 0.096, 0.0992, 0.1027, 0.1061, 0.1092, 0.1123] },
-        { label: "hrm_half (fed back)", color: "#1baf7a", vals: [0.0049, 0.0089, 0.0135, 0.0178, 0.0225, 0.0272, 0.0319, 0.0364, 0.0407, 0.0443, 0.0478, 0.0513, 0.0547, 0.0581, 0.061, 0.0641, 0.0672, 0.0702, 0.0727, 0.0755, 0.0782, 0.0807, 0.0831, 0.0855] },
-        { label: "air (own state)", color: C.L, dash: true, vals: [0.0062, 0.0109, 0.015, 0.0181, 0.0211, 0.0243, 0.0273, 0.0299, 0.0322, 0.0339, 0.0355, 0.037, 0.0386, 0.04, 0.0414, 0.0431, 0.0446, 0.046, 0.0475, 0.0487, 0.0499, 0.0508, 0.0518, 0.0529] }
-      ], mr: 122
+        { label: "air (own state)", color: C.L, dash: true, vals: [0.0062, 0.0109, 0.015, 0.0181, 0.0211, 0.0243, 0.0273, 0.0299, 0.0322, 0.0339, 0.0355, 0.037, 0.0386, 0.04, 0.0414, 0.0431, 0.0446, 0.046, 0.0475, 0.0487, 0.0499, 0.0508, 0.0518, 0.0529] },
+        { label: "hrm_half (own state)", color: "#1baf7a", dash: true, vals: [0.0049, 0.0089, 0.0126, 0.0155, 0.0186, 0.0218, 0.0248, 0.0275, 0.0299, 0.0317, 0.0334, 0.035, 0.0366, 0.038, 0.0395, 0.041, 0.0424, 0.0436, 0.0447, 0.0459, 0.047, 0.048, 0.0488, 0.0497] }
+      ]
     });
     lineplot("fig-horizon-cc", {
-      ymax: 0.07, yticks: [0, 0.02, 0.04, 0.06], xticks: [1, 6, 12, 18, 24],
+      ymax: 0.07, yticks: [0, 0.02, 0.04, 0.06], xticks: [1, 6, 12, 18, 24], mr: 128,
       series: [
-        { label: "Transformer", color: "#eb6834", vals: [0.0033, 0.0058, 0.008, 0.0098, 0.0123, 0.0142, 0.0162, 0.0185, 0.0221, 0.0265, 0.0319, 0.0381, 0.0445, 0.0505, 0.0554, 0.0594, 0.0625, 0.0651, 0.067, 0.067, 0.0666, 0.0664, 0.0667, 0.0677] },
-        { label: "sym (fed back)", color: C.other, vals: [0.0034, 0.0066, 0.0104, 0.0143, 0.0183, 0.0218, 0.0247, 0.0273, 0.0299, 0.0318, 0.0334, 0.035, 0.0362, 0.0371, 0.0381, 0.0388, 0.0394, 0.0402, 0.0408, 0.0416, 0.042, 0.043, 0.0436, 0.0441] },
+        { label: "Tr. teacher-forced", color: "#eb6834", vals: [0.0033, 0.0058, 0.008, 0.0098, 0.0123, 0.0142, 0.0162, 0.0185, 0.0221, 0.0265, 0.0319, 0.0381, 0.0445, 0.0505, 0.0554, 0.0594, 0.0625, 0.0651, 0.067, 0.067, 0.0666, 0.0664, 0.0667, 0.0677] },
+        { label: "Tr. masked", color: "#eb6834", dash: true, vals: [0.0023, 0.0065, 0.0076, 0.0086, 0.0095, 0.0106, 0.0117, 0.0126, 0.0135, 0.0142, 0.0151, 0.0157, 0.0166, 0.0171, 0.0175, 0.018, 0.0183, 0.0188, 0.0193, 0.0197, 0.0201, 0.0205, 0.0207, 0.0214] },
         { label: "air (fed back)", color: C.L, vals: [0.0024, 0.0041, 0.0057, 0.0072, 0.0087, 0.01, 0.0113, 0.0124, 0.0135, 0.0144, 0.0151, 0.0155, 0.016, 0.0167, 0.0171, 0.0176, 0.0181, 0.0186, 0.0187, 0.0192, 0.0197, 0.0201, 0.0203, 0.0206] },
-        { label: "hrm_half (fed back)", color: "#1baf7a", vals: [0.0023, 0.0036, 0.005, 0.006, 0.0072, 0.0081, 0.0091, 0.01, 0.0108, 0.0115, 0.0122, 0.0126, 0.0132, 0.0137, 0.0141, 0.0145, 0.0151, 0.0155, 0.0158, 0.0162, 0.0167, 0.0171, 0.0173, 0.0179] },
-        { label: "air (own state)", color: C.L, dash: true, vals: [0.0024, 0.004, 0.0054, 0.0067, 0.0079, 0.009, 0.01, 0.0108, 0.0116, 0.0122, 0.0127, 0.0132, 0.0138, 0.014, 0.0146, 0.015, 0.0153, 0.0157, 0.016, 0.0163, 0.0167, 0.0172, 0.0175, 0.0179] }
-      ], mr: 122
+        { label: "air (own state)", color: C.L, dash: true, vals: [0.0024, 0.004, 0.0054, 0.0067, 0.0079, 0.009, 0.01, 0.0108, 0.0116, 0.0122, 0.0127, 0.0132, 0.0138, 0.014, 0.0146, 0.015, 0.0153, 0.0157, 0.016, 0.0163, 0.0167, 0.0172, 0.0175, 0.0179] },
+        { label: "hrm_half (own state)", color: "#1baf7a", dash: true, vals: [0.0023, 0.0036, 0.0049, 0.0059, 0.0068, 0.0077, 0.0086, 0.0094, 0.0099, 0.0105, 0.011, 0.0115, 0.012, 0.0123, 0.0127, 0.0129, 0.0132, 0.0138, 0.014, 0.0145, 0.0148, 0.0152, 0.0155, 0.0159] }
+      ]
     });
     // 56 imagined frames, 18 tasks (eval_h56/metrics.json)
     lineplot("fig-h56", {
@@ -909,5 +951,33 @@
     });
   })();
   </script>
+<script>
+  // rollout videos: play the one this screen width shows while it is on screen; a click pauses and resumes.
+  // Readers who prefer reduced motion get the poster and the browser's own controls.
+  (function () {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!("IntersectionObserver" in window)) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        var v = e.target;
+        if (!e.isIntersecting) { v.pause(); return; }
+        if (v.dataset.userPaused) return;
+        v.muted = true;
+        var p = v.play();
+        if (!p || !p.then || v.dataset.ready) return;
+        p.then(function () {
+          v.dataset.ready = "1";
+          v.removeAttribute("controls");            // the control bar would cover the progress bar
+          v.style.cursor = "pointer";
+          v.title = "Click to pause or play";
+          v.addEventListener("click", function () {
+            if (v.paused) { delete v.dataset.userPaused; v.play(); } else { v.dataset.userPaused = "1"; v.pause(); }
+          });
+        }).catch(function () {});
+      });
+    }, { threshold: 0.25 });
+    document.querySelectorAll("video.roll-video").forEach(function (v) { if (v.offsetParent !== null) io.observe(v); });
+  })();
+</script>
 </body>
 </html>
