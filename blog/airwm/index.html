@@ -103,7 +103,7 @@
     <h1>Two Roles in a World Model</h1>
     <p class="subtitle">AIR's specialization carries over from puzzles to a recurrent world model</p>
     <p class="meta"><strong>Jucheng Shen</strong></p>
-    <p class="meta venue">Work in progress | Last updated Nov 23, 2026 | follow-up to <a href="../air/">One Model, Two Roles</a> (AIR)</p>
+    <p class="meta venue">Work in progress | Last updated Nov 24, 2026 | follow-up to <a href="../air/">One Model, Two Roles</a> (AIR)</p>
 
 
     <div class="summary">
@@ -113,6 +113,7 @@
         <li><strong>With gradients through time the model remembers more.</strong> A single frame shows where things are, not how fast they move. On a single task, a linear probe recovers the velocities from the model's state with an R&sup2; of 0.41 under AIR's usual one-step gradient and 0.78 with backpropagation through time; on six of the 18 tasks, 0.55 and 0.73.</li>
         <li><strong>One update of each state per frame beats AIR's six.</strong> It lowers the error by 32&ndash;39% at a third of the compute.</li>
         <li><strong>Against a Transformer of the same size that is also trained to imagine, the model is level on pooled error, ahead on 7 of the 18 tasks and behind on 8.</strong> With two separate networks in place of the shared one, it is ahead on 14. Trained with teacher forcing, the usual way, a Transformer has two to three times the model's error.</li>
+        <li><strong>The model keeps imagining past the length it was trained on.</strong> Over 56 imagined frames, twice the training length, it has about half the error of our best Transformer run, and it is ahead on 16 of the 18 tasks. A Transformer imagining without frames fails once the last real frame leaves its window.</li>
       </ol>
       <p>One cost: two separate half-size networks are 7&ndash;12% more accurate than the one shared network on pooled error, and up to three times more accurate on single tasks.</p>
     </div>
@@ -325,11 +326,13 @@
     </figure>
     </details>
     </details>
-    <p><strong>The recurrent models keep imagining past the length they were trained on; our Transformers do not.</strong> Every model is trained on windows of 32 steps, and the evaluation above stays inside that length. Asked for 56 imagined frames on the 18 tasks, twice the training length, air's error keeps growing at the same slow rate: 0.052 at the 24th frame, 0.060 at the 32nd and 0.076 at the 56th. A recurrent model takes only its state and the action at each step, so a step past the window looks to it like any other step. Each Transformer's error jumps where the window ends: the context-masked one goes from 0.055 at the 25th imagined frame to 0.083 at the 26th and 0.134 at the 32nd. Our Transformer is told the time by a learned position vector for each step, and the vectors past the window were never trained. So the size of this gap belongs to our baseline: a Transformer with relative positions, or one that slides a 32-step window over the frames, might not jump, and we have not tested one. What the recurrent model gets without any such change is a horizon that is not tied to the training length.</p>
+    <p><strong>The recurrent models keep imagining past the length they were trained on; a Transformer cannot do so without frames.</strong> Every model is trained on windows of 32 steps, and the evaluation above stays inside that length. Asked for 56 imagined frames on the 18 tasks, twice the training length, air's error keeps growing at the same slow rate: 0.052 at the 24th frame, 0.060 at the 32nd and 0.076 at the 56th. A recurrent model takes only its state and the action at each step, so a step past the window looks to it like any other step.</p>
+    <p>Our Transformer is told the time by a learned position vector for each step, and the vectors past the 32nd were never trained. Run unchanged, the context-masked Transformer's error jumps there, from 0.055 at the 25th imagined frame to 0.083 at the 26th. So we also run each Transformer over a sliding window of its last 32 steps, which keeps every position inside the trained range, and the jump goes away (0.057 at the 26th frame). The window brings its own limit. A Transformer carries no state from step to step, so all it knows of the episode is what its window holds. Imagining without frames, it stays close to air until the 32nd imagined frame. At the 33rd the last real frame leaves the window, and its error goes from 0.078 to 0.27, above the 0.21 of predicting that nothing moves. Past its window a Transformer has to feed its predictions back, which is the less accurate way to imagine for every model here.</p>
+    <p>Over the 56 frames, the best Transformer runs have an error of 0.100 (27.3M, without frames, no window) and 0.107 (27.3M, fed back, with the window); the same-size Transformer's best is 0.130. air without frames has 0.053, about half, and hrm_half 0.050. Taking for each task the best of every Transformer run we have, air is still ahead on 16 of the 18 tasks: by 5&ndash;7% on five of them, by 19&ndash;53% on ten, and by 13 times on pendulum-swingup. It is behind on the two reacher tasks, by 1.2 and 1.4 times. hrm_half is ahead on 16 and level on two. The advantage comes from imagining without frames, not from feeding back better: fed back, air (0.108) is level with the larger Transformer and 17% below the same-size one. Neither family was trained past 32 steps, and a Transformer trained on longer windows would have a longer horizon; we have not trained one. What the recurrent model has is a horizon that is not tied to the training length.</p>
     <figure class="chart">
     <div class="chart-title">Error over 56 imagined frames, 18 tasks</div>
     <div class="plot lp" id="fig-h56"></div>
-    <figcaption>The three Transformers (27.3M) and air over 56 imagined frames (a separate evaluation, so values at frame 24 differ slightly from the figure above). Solid lines: predictions fed back. Dashed lines: imagining without frames. Dashed grey: predicting that nothing moves. The Transformers were never trained on time steps to the right of the dotted line. Hover or tap for values.</figcaption>
+    <figcaption>air and the 27.3M Transformers over 56 imagined frames (a separate evaluation, so values at frame 24 differ slightly from the figure above). Each Transformer attends to its last 32 steps. Solid lines: predictions fed back. Dashed lines: imagining without frames. Dashed grey: predicting that nothing moves. At the dotted line the last real frame is still in the Transformer's window; one frame later it is not. Hover or tap for values.</figcaption>
     </figure>
 
     <h2>5. One update of each state per time step beats AIR's six</h2>
@@ -403,7 +406,7 @@
     <h2>Limitations</h2>
     <ul>
       <li><strong>Accuracy here is error in the latent space of a frozen tokenizer.</strong> We have not yet used the model for planning or to train a policy, which is what a world model is for.</li>
-      <li><strong>The Transformer baselines are plain ones.</strong> They are untuned, trained without Dreamer&nbsp;4's noise objective, and use a learned position for each time step, so the comparison beyond the 32-step training window is not yet a fair one (Section 4).</li>
+      <li><strong>The Transformer baselines are plain ones.</strong> They are untuned and trained without Dreamer&nbsp;4's noise objective. Past the 32-step training window we run them unchanged or over a sliding window; we have not trained one on longer windows or with relative time positions (Section 4).</li>
       <li><strong>Pooled numbers hide per-task differences.</strong> On the 18 tasks the pooled error is dominated by the tasks with the largest errors, the three walker tasks above all; Sections 3 and 4 give the per-task comparisons.</li>
       <li><strong>The data are simulated.</strong> All tasks are DeepMind Control tasks, with episodes collected by trained agents.</li>
       <li><strong>The models are small and the seeds few.</strong> air has 13.6M parameters; most numbers are means over 3 seeds, a few over 1 or 2 (marked).</li>
@@ -415,7 +418,7 @@
     <ul>
       <li>Find out why a second L&ndash;H cycle within a step hurts (Section 5).</li>
       <li>Train with windows longer than 32 steps, since accuracy still improves as the gradient reaches further.</li>
-      <li>Train both families with Dreamer&nbsp;4's noise objective, and give the Transformer relative time positions so the two can be compared beyond the 32-step training window.</li>
+      <li>Train both families with Dreamer&nbsp;4's noise objective, and train the Transformer on longer windows to see how much of the gap past 32 steps remains.</li>
       <li>Put the model to use the way world models are meant to be used: for planning, or for training a policy inside it.</li>
     </ul>
 
@@ -649,7 +652,7 @@
         s += t(ml + (W - ml - mr) / 2, H - 3, "imagined frame", { size: 12, color: C.soft, plain: true });
         (cfg.vlines || []).forEach(function (v) {
           s += '<line x1="' + X(v.x - 1) + '" y1="' + mt + '" x2="' + X(v.x - 1) + '" y2="' + (H - mb) + '" stroke="#b5b1aa" stroke-dasharray="2 3"/>';
-          s += t(X(v.x - 1) + (v.left ? -5 : 5), mt + 10, v.label, { size: 11.5, color: C.soft, anchor: v.left ? "end" : "start", plain: true });
+          s += t(X(v.x - 1) + (v.left ? -5 : 5), mt + 10, (W < 520 && v.narrow) || v.label, { size: 11.5, color: C.soft, anchor: v.left ? "end" : "start", plain: true });
         });
         cfg.series.forEach(function (se) {
           var d = se.vals.map(function (v, i) { return (i ? "L" : "M") + X(i).toFixed(1) + "," + Y(v).toFixed(1); }).join("");
@@ -718,14 +721,14 @@
         { label: "hrm_half", color: "#1baf7a", dash: true, vals: [0.0023, 0.0036, 0.0049, 0.0059, 0.0068, 0.0077, 0.0086, 0.0094, 0.0099, 0.0105, 0.011, 0.0115, 0.012, 0.0123, 0.0127, 0.0129, 0.0132, 0.0138, 0.014, 0.0145, 0.0148, 0.0152, 0.0155, 0.0159] }
       ]
     });
-    // 56 imagined frames, 18 tasks (eval_h56/metrics.json)
+    // 56 imagined frames, 18 tasks (air: eval_h56/metrics.json; Transformers over a 32-step window: eval_h56_w32/metrics.json)
     lineplot("fig-h56", {
-      ymax: 0.32, yticks: [0, 0.1, 0.2, 0.3], xticks: [1, 8, 16, 24, 32, 40, 48, 56], height: 270, mr: 134,
-      vlines: [{ x: 25, label: "last trained step", left: true }],
+      ymax: 0.32, yticks: [0, 0.1, 0.2, 0.3], xticks: [1, 8, 16, 24, 32, 40, 48, 56], height: 270, mr: 140,
+      vlines: [{ x: 32, label: "last real frame in the window", narrow: "last real frame", left: true }],
       series: [
-        { label: "Tr. teacher-forced", color: "#eb6834", vals: [0.0024, 0.005, 0.0082, 0.012, 0.0164, 0.0217, 0.028, 0.0348, 0.0425, 0.0512, 0.0606, 0.0706, 0.0807, 0.0908, 0.1008, 0.1097, 0.1186, 0.1268, 0.136, 0.1435, 0.1505, 0.1569, 0.1633, 0.1682, 0.173, 0.1825, 0.1969, 0.2115, 0.2231, 0.2341, 0.2435, 0.2506, 0.2567, 0.2626, 0.2666, 0.2701, 0.2719, 0.2757, 0.2788, 0.2818, 0.2842, 0.2873, 0.2892, 0.2912, 0.2922, 0.2932, 0.2941, 0.2954, 0.2953, 0.2965, 0.298, 0.2999, 0.3008, 0.3021, 0.303, 0.3043] },
-        { label: "Tr. sched. sampling", color: "#a8501a", vals: [0.0024, 0.0049, 0.0077, 0.0112, 0.0147, 0.0183, 0.0219, 0.0259, 0.0304, 0.0356, 0.0411, 0.0468, 0.0523, 0.0581, 0.0636, 0.0692, 0.0745, 0.0801, 0.086, 0.0917, 0.0967, 0.1013, 0.1061, 0.1098, 0.1137, 0.1229, 0.1379, 0.1533, 0.1653, 0.1772, 0.1876, 0.1949, 0.2016, 0.2088, 0.2149, 0.2208, 0.2237, 0.2275, 0.2305, 0.2344, 0.2374, 0.2418, 0.2451, 0.2471, 0.2478, 0.2497, 0.2521, 0.2551, 0.2562, 0.2574, 0.2585, 0.26, 0.2608, 0.2617, 0.2627, 0.2645] },
-        { label: "Tr. masked", color: "#eb6834", dash: true, vals: [0.0041, 0.0101, 0.0145, 0.0188, 0.0227, 0.026, 0.0289, 0.0318, 0.0345, 0.0367, 0.0386, 0.0409, 0.0427, 0.0446, 0.046, 0.0473, 0.0485, 0.0492, 0.0499, 0.0509, 0.0515, 0.0523, 0.0535, 0.0542, 0.0552, 0.083, 0.096, 0.1076, 0.116, 0.123, 0.1287, 0.1336, 0.1384, 0.143, 0.1474, 0.1505, 0.151, 0.1521, 0.1549, 0.1571, 0.1587, 0.1611, 0.1637, 0.1657, 0.1664, 0.1664, 0.1672, 0.1691, 0.1703, 0.1713, 0.1717, 0.1717, 0.1713, 0.1709, 0.1718, 0.1726] },
+        { label: "Tr. teacher-forced", color: "#eb6834", vals: [0.0024, 0.005, 0.0082, 0.012, 0.0164, 0.0217, 0.028, 0.0348, 0.0425, 0.0512, 0.0606, 0.0706, 0.0807, 0.0908, 0.1008, 0.1097, 0.1186, 0.1268, 0.136, 0.1435, 0.1505, 0.1569, 0.1633, 0.1682, 0.173, 0.1775, 0.1821, 0.1858, 0.1894, 0.1924, 0.1951, 0.1981, 0.2006, 0.203, 0.2054, 0.2081, 0.2104, 0.2129, 0.2156, 0.2181, 0.2203, 0.2222, 0.224, 0.2257, 0.227, 0.2281, 0.2306, 0.232, 0.2332, 0.234, 0.2348, 0.2359, 0.2368, 0.2374, 0.2382, 0.2388] },
+        { label: "Tr. masked (fed back)", color: "#a8501a", vals: [0.0041, 0.0081, 0.0125, 0.0173, 0.0223, 0.0276, 0.0327, 0.0371, 0.0418, 0.0467, 0.0514, 0.0565, 0.0609, 0.0658, 0.0707, 0.0751, 0.0792, 0.0828, 0.0871, 0.0912, 0.0954, 0.0997, 0.1036, 0.1066, 0.1096, 0.113, 0.1159, 0.1187, 0.121, 0.1232, 0.1255, 0.1278, 0.1304, 0.1328, 0.1352, 0.1373, 0.1394, 0.1411, 0.1428, 0.1449, 0.1472, 0.1494, 0.1512, 0.1527, 0.1546, 0.1557, 0.1575, 0.1589, 0.1606, 0.1622, 0.1636, 0.165, 0.1661, 0.1666, 0.1676, 0.1681] },
+        { label: "Tr. masked", color: "#eb6834", dash: true, vals: [0.0041, 0.0101, 0.0145, 0.0188, 0.0227, 0.026, 0.0289, 0.0318, 0.0345, 0.0367, 0.0386, 0.0409, 0.0427, 0.0446, 0.046, 0.0473, 0.0485, 0.0492, 0.0499, 0.0509, 0.0515, 0.0523, 0.0535, 0.0542, 0.0552, 0.057, 0.0573, 0.058, 0.0586, 0.06, 0.0626, 0.078, 0.2706, 0.2712, 0.272, 0.2723, 0.2714, 0.2713, 0.2707, 0.2705, 0.2698, 0.2696, 0.2702, 0.2702, 0.2704, 0.2695, 0.2686, 0.2689, 0.2694, 0.2691, 0.2692, 0.2693, 0.2692, 0.2693, 0.2694, 0.2697] },
         { label: "repeat last frame", color: "#9a968f", dash: true, vals: [0.0323, 0.0693, 0.0983, 0.1182, 0.1337, 0.1437, 0.1536, 0.1613, 0.1696, 0.1746, 0.1768, 0.1774, 0.1841, 0.1895, 0.191, 0.1925, 0.1971, 0.1993, 0.201, 0.202, 0.2065, 0.2074, 0.2071, 0.2056, 0.2094, 0.211, 0.21, 0.2086, 0.2105, 0.2106, 0.2099, 0.2081, 0.2114, 0.2133, 0.2131, 0.2114, 0.2148, 0.2166, 0.2166, 0.2158, 0.2186, 0.2203, 0.2212, 0.2201, 0.2225, 0.2224, 0.2203, 0.2186, 0.2227, 0.2256, 0.226, 0.2246, 0.2256, 0.2249, 0.224, 0.2237] },
         { label: "air (fed back)", color: C.L, vals: [0.0065, 0.0111, 0.016, 0.0218, 0.0273, 0.0328, 0.0381, 0.0427, 0.0479, 0.0531, 0.058, 0.0632, 0.0681, 0.0729, 0.0775, 0.0821, 0.0861, 0.0899, 0.0935, 0.0975, 0.1016, 0.1052, 0.1082, 0.1107, 0.1136, 0.1161, 0.1187, 0.121, 0.1231, 0.1252, 0.1268, 0.1288, 0.1308, 0.1329, 0.1347, 0.1364, 0.1383, 0.1401, 0.1416, 0.1429, 0.1439, 0.1456, 0.147, 0.1479, 0.1491, 0.1502, 0.1514, 0.1525, 0.1541, 0.1549, 0.1555, 0.1563, 0.157, 0.1581, 0.1598, 0.1598] },
         { label: "air", color: C.L, dash: true, vals: [0.0065, 0.0109, 0.0146, 0.0181, 0.021, 0.0237, 0.0265, 0.0286, 0.031, 0.0331, 0.0349, 0.0368, 0.0387, 0.0403, 0.0416, 0.0426, 0.0435, 0.0445, 0.0458, 0.0473, 0.0486, 0.0497, 0.0509, 0.0517, 0.0531, 0.0545, 0.0558, 0.0571, 0.0575, 0.0582, 0.059, 0.06, 0.061, 0.0619, 0.0628, 0.0639, 0.0649, 0.0661, 0.0671, 0.0677, 0.0681, 0.0687, 0.0696, 0.0702, 0.0712, 0.0716, 0.0721, 0.0724, 0.0733, 0.0736, 0.074, 0.0747, 0.0752, 0.0755, 0.0759, 0.0761] }
